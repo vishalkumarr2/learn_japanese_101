@@ -1,9 +1,9 @@
-
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3週間で1000語！インタラクティブ日本語単語帳 (Interactive Japanese 1000 Word Vocabulary App)</title>
+    <title>4週間で1000語！インタラクティブ日本語単語帳 (Interactive Japanese 1000 Word Vocabulary App)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chosen Palette: Warm Neutrals -->
     <!-- Application Structure Plan: A single-page application designed as an interactive flashcard system. The information architecture is a clear hierarchy: Main App -> Week Selection -> Day Selection -> Daily Flashcards. This structure breaks the 1000 words into manageable daily lessons, preventing user overwhelm. Key interactions include week/day navigation to filter content and a "flip" action on each card for active recall practice. A progress bar for each day provides immediate feedback. This user-flow was chosen because it directly supports the user's goal of learning and memorization, transforming a static list into an effective study tool. -->
@@ -11,7 +11,9 @@
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
-        .perspective { perspective: 1000px; }
+        .perspective-container {
+            perspective: 1000px;
+        }
         .card-inner {
             position: relative;
             width: 100%;
@@ -33,9 +35,14 @@
             justify-content: center;
             align-items: center;
             border-radius: 0.75rem;
+            padding: 0.5rem;
         }
         .card-back {
             transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
         .nav-btn {
             transition: all 0.2s ease-in-out;
@@ -44,21 +51,12 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
-         /* Hide scrollbar for Chrome, Safari and Opera */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
     </style>
 </head>
 <body class="bg-[#FDF6E3] text-[#586E75] min-h-screen">
     <div id="app" class="container mx-auto p-4 md:p-8 max-w-7xl">
         <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-5xl font-bold text-[#657B83]">3週間で1000語！</h1>
+            <h1 class="text-3xl md:text-5xl font-bold text-[#657B83]">4週間で1000語！</h1>
             <p class="text-lg md:text-xl text-[#839496] mt-2">インタラクティブ日本語単語帳 (Interactive Japanese Vocab App)</p>
         </header>
 
@@ -68,6 +66,11 @@
                 </nav>
                 <nav id="day-nav" class="flex justify-center gap-1 md:gap-2 flex-wrap bg-white/50 backdrop-blur-sm p-3 rounded-xl shadow-inner">
                 </nav>
+                <div id="study-mode-container" class="text-center mt-4">
+                    <button id="study-mode-toggle" class="px-4 py-2 bg-[#cb4b16] text-white font-semibold rounded-lg shadow-md hover:bg-[#dc322f] transition-colors text-sm">
+                        <!-- Button text is set by JS -->
+                    </button>
+                </div>
                 <div id="daily-progress" class="mt-4 w-full bg-gray-200 rounded-full h-2.5">
                     <div id="progress-bar" class="bg-[#268BD2] h-2.5 rounded-full" style="width: 0%"></div>
                 </div>
@@ -75,7 +78,6 @@
             </div>
             
             <div id="flashcard-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 mt-6">
-                <!-- Flashcards will be dynamically inserted here -->
             </div>
         </main>
     </div>
@@ -84,736 +86,103 @@
         const vocabulary = {
             1: {
                 1: { title: "基本の挨拶 (Essentials)", words: [
-                    { en: "Hello", jp: "こんにちは", romaji: "Konnichiwa" },
-                    { en: "Good morning", jp: "おはようございます", romaji: "Ohayou gozaimasu" },
-                    { en: "Good evening", jp: "こんばんは", romaji: "Konbanwa" },
-                    { en: "Thank you", jp: "ありがとうございます", romaji: "Arigatou gozaimasu" },
-                    { en: "Yes", jp: "はい", romaji: "Hai" }, { en: "No", jp: "いいえ", romaji: "Iie" },
-                    { en: "I / Me", jp: "私", romaji: "Watashi" }, { en: "You", jp: "あなた", romaji: "Anata" },
-                    { en: "This", jp: "これ", romaji: "Kore" }, { en: "That", jp: "それ", romaji: "Sore" },
-                    { en: "to do", jp: "する", romaji: "Suru" }, { en: "to be (inanimate)", jp: "ある", romaji: "Aru" },
-                    { en: "Good", jp: "良い / いい", romaji: "Yoi / Ii" }, { en: "Name", jp: "名前", romaji: "Namae" },
-                    { en: "Japan", jp: "日本", romaji: "Nihon / Nippon" }
+                    { en: "Hello", jp: "こんにちは", romaji: "Konnichiwa" }, { en: "Good morning", jp: "おはようございます", romaji: "Ohayou gozaimasu" }, { en: "Good evening", jp: "こんばんは", romaji: "Konbanwa" }, { en: "Thank you", jp: "ありがとうございます", romaji: "Arigatou gozaimasu" }, { en: "Yes", jp: "はい", romaji: "Hai" }, { en: "No", jp: "いいえ", romaji: "Iie" }, { en: "I / Me", jp: "私", romaji: "Watashi" }, { en: "You", jp: "あなた", romaji: "Anata" }, { en: "This", jp: "これ", romaji: "Kore" }, { en: "That", jp: "それ", romaji: "Sore" }, { en: "to do", jp: "する", romaji: "Suru" }, { en: "to be (inanimate)", jp: "ある", romaji: "Aru" }, { en: "Good", jp: "良い / いい", romaji: "Yoi / Ii" }, { en: "Name", jp: "名前", romaji: "Namae" }, { en: "Japan", jp: "日本", romaji: "Nihon / Nippon" }
                 ]},
                 2: { title: "自己紹介 (Introductions)", words: [
-                    { en: "Goodbye", jp: "さようなら", romaji: "Sayounara" },
-                    { en: "Excuse me / Sorry", jp: "すみません", romaji: "Sumimasen" },
-                    { en: "Pleased to meet you", jp: "どうぞよろしく", romaji: "Douzo yoroshiku" },
-                    { en: "I don't understand", jp: "わかりません", romaji: "Wakarimasen" },
-                    { en: "He / She", jp: "彼 / 彼女", romaji: "Kare / Kanojo" },
-                    { en: "Person", jp: "人", romaji: "Hito" }, { en: "Friend", jp: "友達", romaji: "Tomodachi" },
-                    { en: "Family", jp: "家族", romaji: "Kazoku" }, { en: "Teacher", jp: "先生", romaji: "Sensei" },
-                    { en: "Student", jp: "学生", romaji: "Gakusei" }, { en: "One", jp: "一", romaji: "Ichi" },
-                    { en: "Two", jp: "二", romaji: "Ni" }, { en: "Three", jp: "三", romaji: "San" },
-                    { en: "Four", jp: "四", romaji: "Shi / Yon" }, { en: "Five", jp: "五", romaji: "Go" },
-                    { en: "Water", jp: "水", romaji: "Mizu" }, { en: "Book", jp: "本", romaji: "Hon" },
-                    { en: "to go", jp: "行く", romaji: "Iku" }, { en: "to come", jp: "来る", romaji: "Kuru" },
-                    { en: "to see / watch", jp: "見る", romaji: "Miru" }, { en: "to eat", jp: "食べる", romaji: "Taberu" },
-                    { en: "Big", jp: "大きい", romaji: "Ookii" }, { en: "Small", jp: "小さい", romaji: "Chiisai" },
-                    { en: "What?", jp: "何", romaji: "Nani / Nan" }, { en: "Where?", jp: "どこ", romaji: "Doko" }
+                    { en: "Goodbye", jp: "さようなら", romaji: "Sayounara" }, { en: "Excuse me / Sorry", jp: "すみません", romaji: "Sumimasen" }, { en: "Pleased to meet you", jp: "どうぞよろしく", romaji: "Douzo yoroshiku" }, { en: "I don't understand", jp: "わかりません", romaji: "Wakarimasen" }, { en: "He / She", jp: "彼 / 彼女", romaji: "Kare / Kanojo" }, { en: "Person", jp: "人", romaji: "Hito" }, { en: "Friend", jp: "友達", romaji: "Tomodachi" }, { en: "Family", jp: "家族", romaji: "Kazoku" }, { en: "Teacher", jp: "先生", romaji: "Sensei" }, { en: "Student", jp: "学生", romaji: "Gakusei" }, { en: "One", jp: "一", romaji: "Ichi" }, { en: "Two", jp: "二", romaji: "Ni" }, { en: "Three", jp: "三", romaji: "San" }, { en: "Four", jp: "四", romaji: "Shi / Yon" }, { en: "Five", jp: "五", romaji: "Go" }, { en: "Water", jp: "水", romaji: "Mizu" }, { en: "Book", jp: "本", romaji: "Hon" }, { en: "to go", jp: "行く", romaji: "Iku" }, { en: "to come", jp: "来る", romaji: "Kuru" }, { en: "to see / watch", jp: "見る", romaji: "Miru" }, { en: "to eat", jp: "食べる", romaji: "Taberu" }, { en: "Big", jp: "大きい", romaji: "Ookii" }, { en: "Small", jp: "小さい", romaji: "Chiisai" }, { en: "What?", jp: "何", romaji: "Nani / Nan" }, { en: "Where?", jp: "どこ", romaji: "Doko" }
                 ]},
                 3: { title: "時間と場所 (Time & Places)", words: [
-                    { en: "Let's eat", jp: "いただきます", romaji: "Itadakimasu" },
-                    { en: "That was delicious", jp: "ごちそうさまでした", romaji: "Gochisousama deshita" },
-                    { en: "We / They", jp: "私たち / 彼ら", romaji: "Watashitachi / Karera" },
-                    { en: "Six", jp: "六", romaji: "Roku" }, { en: "Seven", jp: "七", romaji: "Shichi / Nana" },
-                    { en: "Eight", jp: "八", romaji: "Hachi" }, { en: "Nine", jp: "九", romaji: "Kyuu / Ku" },
-                    { en: "Ten", jp: "十", romaji: "Juu" }, { en: "Now", jp: "今", romaji: "Ima" },
-                    { en: "Today", jp: "今日", romaji: "Kyou" }, { en: "Tomorrow", jp: "明日", romaji: "Ashita" },
-                    { en: "Yesterday", jp: "昨日", romaji: "Kinou" }, { en: "Time / Hour", jp: "時間", romaji: "Jikan" },
-                    { en: "O'clock", jp: "時", romaji: "Ji" }, { en: "Minute", jp: "分", romaji: "Fun / Pun" },
-                    { en: "School", jp: "学校", romaji: "Gakkou" }, { en: "(Train) Station", jp: "駅", romaji: "Eki" },
-                    { en: "House / Home", jp: "家 / うち", romaji: "Ie / Uchi" },
-                    { en: "Right", jp: "右", romaji: "Migi" }, { en: "Left", jp: "左", romaji: "Hidari" },
-                    { en: "Up / Above", jp: "上", romaji: "Ue" }, { en: "Down / Below", jp: "下", romaji: "Shita" },
-                    { en: "Food", jp: "食べ物", romaji: "Tabemono" }, { en: "to drink", jp: "飲む", romaji: "Nomu" },
-                    { en: "to speak", jp: "話す", romaji: "Hanasu" }, { en: "to read", jp: "読む", romaji: "Yomu" },
-                    { en: "New", jp: "新しい", romaji: "Atarashii" }, { en: "Old (not people)", jp: "古い", romaji: "Furui" },
-                    { en: "When?", jp: "いつ", romaji: "Itsu" }, { en: "Who?", jp: "誰", romaji: "Dare" }
+                    { en: "Let's eat", jp: "いただきます", romaji: "Itadakimasu" }, { en: "That was delicious", jp: "ごちそうさまでした", romaji: "Gochisousama deshita" }, { en: "We / They", jp: "私たち / 彼ら", romaji: "Watashitachi / Karera" }, { en: "Six", jp: "六", romaji: "Roku" }, { en: "Seven", jp: "七", romaji: "Shichi / Nana" }, { en: "Eight", jp: "八", romaji: "Hachi" }, { en: "Nine", jp: "九", romaji: "Kyuu / Ku" }, { en: "Ten", jp: "十", romaji: "Juu" }, { en: "Now", jp: "今", romaji: "Ima" }, { en: "Today", jp: "今日", romaji: "Kyou" }, { en: "Tomorrow", jp: "明日", romaji: "Ashita" }, { en: "Yesterday", jp: "昨日", romaji: "Kinou" }, { en: "Time / Hour", jp: "時間", romaji: "Jikan" }, { en: "O'clock", jp: "時", romaji: "Ji" }, { en: "Minute", jp: "分", romaji: "Fun / Pun" }, { en: "School", jp: "学校", romaji: "Gakkou" }, { en: "(Train) Station", jp: "駅", romaji: "Eki" }, { en: "House / Home", jp: "家 / うち", romaji: "Ie / Uchi" }, { en: "Right", jp: "右", romaji: "Migi" }, { en: "Left", jp: "左", romaji: "Hidari" }, { en: "Up / Above", jp: "上", romaji: "Ue" }, { en: "Down / Below", jp: "下", romaji: "Shita" }, { en: "Food", jp: "食べ物", romaji: "Tabemono" }, { en: "to drink", jp: "飲む", romaji: "Nomu" }, { en: "to speak", jp: "話す", romaji: "Hanasu" }, { en: "to read", jp: "読む", romaji: "Yomu" }, { en: "New", jp: "新しい", romaji: "Atarashii" }, { en: "Old (not people)", jp: "古い", romaji: "Furui" }, { en: "When?", jp: "いつ", romaji: "Itsu" }, { en: "Who?", jp: "誰", romaji: "Dare" }
                 ]},
                 4: { title: "日常の物 (Daily Objects)", words: [
-                    { en: "Mother", jp: "お母さん", romaji: "Okaa-san" }, { en: "Father", jp: "お父さん", romaji: "Otoo-san" },
-                    { en: "Child", jp: "子供", romaji: "Kodomo" }, { en: "Adult", jp: "大人", romaji: "Otona" },
-                    { en: "Morning", jp: "朝", romaji: "Asa" }, { en: "Noon", jp: "昼", romaji: "Hiru" },
-                    { en: "Night", jp: "夜", romaji: "Yoru" }, { en: "Week", jp: "週", romaji: "Shuu" },
-                    { en: "Month", jp: "月", romaji: "Gatsu" }, { en: "Year", jp: "年", romaji: "Nen" },
-                    { en: "Store", jp: "店", romaji: "Mise" }, { en: "Hospital", jp: "病院", romaji: "Byouin" },
-                    { en: "Bank", jp: "銀行", romaji: "Ginkou" }, { en: "Inside", jp: "中", romaji: "Naka" },
-                    { en: "Outside", jp: "外", romaji: "Soto" }, { en: "Here", jp: "ここ", romaji: "Koko" },
-                    { en: "There", jp: "そこ", romaji: "Soko" }, { en: "(Green) Tea", jp: "お茶", romaji: "Ocha" },
-                    { en: "Car", jp: "車", romaji: "Kuruma" }, { en: "Train", jp: "電車", romaji: "Densha" },
-                    { en: "Money", jp: "お金", romaji: "Okane" }, { en: "Weather", jp: "天気", romaji: "Tenki" },
-                    { en: "to write", jp: "書く", romaji: "Kaku" }, { en: "to buy", jp: "買う", romaji: "Kau" },
-                    { en: "to meet", jp: "会う", romaji: "Au" }, { en: "to sleep", jp: "寝る", romaji: "Neru" },
-                    { en: "Hot (weather)", jp: "暑い", romaji: "Atsui" }, { en: "Cold (weather)", jp: "寒い", romaji: "Samui" },
-                    { en: "Delicious", jp: "おいしい", romaji: "Oishii" }, { en: "Fun", jp: "楽しい", romaji: "Tanoshii" },
-                    { en: "Difficult", jp: "難しい", romaji: "Muzukashii" }, { en: "Easy", jp: "易しい", romaji: "Yasashii" },
-                    { en: "Why?", jp: "なぜ", romaji: "Naze" }, { en: "How?", jp: "どう", romaji: "Dou" }
+                    { en: "Mother", jp: "お母さん", romaji: "Okaa-san" }, { en: "Father", jp: "お父さん", romaji: "Otoo-san" }, { en: "Child", jp: "子供", romaji: "Kodomo" }, { en: "Adult", jp: "大人", romaji: "Otona" }, { en: "Morning", jp: "朝", romaji: "Asa" }, { en: "Noon", jp: "昼", romaji: "Hiru" }, { en: "Night", jp: "夜", romaji: "Yoru" }, { en: "Week", jp: "週", romaji: "Shuu" }, { en: "Month", jp: "月", romaji: "Gatsu" }, { en: "Year", jp: "年", romaji: "Nen" }, { en: "Store", jp: "店", romaji: "Mise" }, { en: "Hospital", jp: "病院", romaji: "Byouin" }, { en: "Bank", jp: "銀行", romaji: "Ginkou" }, { en: "Inside", jp: "中", romaji: "Naka" }, { en: "Outside", jp: "外", romaji: "Soto" }, { en: "Here", jp: "ここ", romaji: "Koko" }, { en: "There", jp: "そこ", romaji: "Soko" }, { en: "(Green) Tea", jp: "お茶", romaji: "Ocha" }, { en: "Car", jp: "車", romaji: "Kuruma" }, { en: "Train", jp: "電車", romaji: "Densha" }, { en: "Money", jp: "お金", romaji: "Okane" }, { en: "Weather", jp: "天気", romaji: "Tenki" }, { en: "to write", jp: "書く", romaji: "Kaku" }, { en: "to buy", jp: "買う", romaji: "Kau" }, { en: "to meet", jp: "会う", romaji: "Au" }, { en: "to sleep", jp: "寝る", romaji: "Neru" }, { en: "Hot (weather)", jp: "暑い", romaji: "Atsui" }, { en: "Cold (weather)", jp: "寒い", romaji: "Samui" }, { en: "Delicious", jp: "おいしい", romaji: "Oishii" }, { en: "Fun", jp: "楽しい", romaji: "Tanoshii" }, { en: "Difficult", jp: "難しい", romaji: "Muzukashii" }, { en: "Easy", jp: "易しい", romaji: "Yasashii" }, { en: "Why?", jp: "なぜ", romaji: "Naze" }, { en: "How?", jp: "どう", romaji: "Dou" }
                 ]},
                 5: { title: "食事と飲み物 (Food & Drink)", words: [
-                    { en: "Older Brother", jp: "お兄さん", romaji: "Onii-san" }, { en: "Older Sister", jp: "お姉さん", romaji: "Onee-san" },
-                    { en: "Younger Brother", jp: "弟", romaji: "Otouto" }, { en: "Younger Sister", jp: "妹", romaji: "Imouto" },
-                    { en: "Man", jp: "男", romaji: "Otoko" }, { en: "Woman", jp: "女", romaji: "Onna" },
-                    { en: "Breakfast", jp: "朝ご飯", romaji: "Asagohan" }, { en: "Lunch", jp: "昼ご飯", romaji: "Hirugohan" },
-                    { en: "Dinner", jp: "晩ご飯", romaji: "Bangohan" }, { en: "Meat", jp: "肉", romaji: "Niku" },
-                    { en: "Fish", jp: "魚", romaji: "Sakana" }, { en: "Vegetables", jp: "野菜", romaji: "Yasai" },
-                    { en: "Fruit", jp: "果物", romaji: "Kudamono" }, { en: "Bread", jp: "パン", romaji: "Pan" },
-                    { en: "Egg", jp: "卵", romaji: "Tamago" }, { en: "Milk", jp: "牛乳", romaji: "Gyuunyuu" },
-                    { en: "Coffee", jp: "コーヒー", romaji: "Koohii" }, { en: "Restaurant", jp: "レストラン", romaji: "Resutoran" },
-                    { en: "to order", jp: "注文する", romaji: "Chuumon suru" }, { en: "Bill / Check", jp: "お会計", romaji: "Okaikei" },
-                    { en: "Music", jp: "音楽", romaji: "Ongaku" }, { en: "Movie", jp: "映画", romaji: "Eiga" },
-                    { en: "Phone", jp: "電話", romaji: "Denwa" }, { en: "Bag", jp: "鞄", romaji: "Kaban" },
-                    { en: "to wake up", jp: "起きる", romaji: "Okiru" }, { en: "to return home", jp: "帰る", romaji: "Kaeru" },
-                    { en: "to understand", jp: "分かる", romaji: "Wakaru" }, { en: "to use", jp: "使う", romaji: "Tsukau" },
-                    { en: "to make", jp: "作る", romaji: "Tsukuru" }, { en: "Expensive / High", jp: "高い", romaji: "Takai" },
-                    { en: "Cheap / Low", jp: "安い", romaji: "Yasui" }, { en: "Beautiful", jp: "美しい", romaji: "Utsukushii" },
-                    { en: "Cute", jp: "かわいい", romaji: "Kawaii" }, { en: "Fast", jp: "速い", romaji: "Hayai" },
-                    { en: "Slow", jp: "遅い", romaji: "Osoi" }, { en: "Interesting", jp: "面白い", romaji: "Omoshiroi" },
-                    { en: "Red", jp: "赤い", romaji: "Akai" }, { en: "Blue", jp: "青い", romaji: "Aoi" },
-                    { en: "How much?", jp: "いくら", romaji: "Ikura" }, { en: "Which one?", jp: "どれ", romaji: "Dore" }
+                    { en: "Older Brother", jp: "お兄さん", romaji: "Onii-san" }, { en: "Older Sister", jp: "お姉さん", romaji: "Onee-san" }, { en: "Younger Brother", jp: "弟", romaji: "Otouto" }, { en: "Younger Sister", jp: "妹", romaji: "Imouto" }, { en: "Man", jp: "男", romaji: "Otoko" }, { en: "Woman", jp: "女", romaji: "Onna" }, { en: "Breakfast", jp: "朝ご飯", romaji: "Asagohan" }, { en: "Lunch", jp: "昼ご飯", romaji: "Hirugohan" }, { en: "Dinner", jp: "晩ご飯", romaji: "Bangohan" }, { en: "Meat", jp: "肉", romaji: "Niku" }, { en: "Fish", jp: "魚", romaji: "Sakana" }, { en: "Vegetables", jp: "野菜", romaji: "Yasai" }, { en: "Fruit", jp: "果物", romaji: "Kudamono" }, { en: "Bread", jp: "パン", romaji: "Pan" }, { en: "Egg", jp: "卵", romaji: "Tamago" }, { en: "Milk", jp: "牛乳", romaji: "Gyuunyuu" }, { en: "Coffee", jp: "コーヒー", romaji: "Koohii" }, { en: "Restaurant", jp: "レストラン", romaji: "Resutoran" }, { en: "to order", jp: "注文する", romaji: "Chuumon suru" }, { en: "Bill / Check", jp: "お会計", romaji: "Okaikei" }, { en: "Music", jp: "音楽", romaji: "Ongaku" }, { en: "Movie", jp: "映画", romaji: "Eiga" }, { en: "Phone", jp: "電話", romaji: "Denwa" }, { en: "Bag", jp: "鞄", romaji: "Kaban" }, { en: "to wake up", jp: "起きる", romaji: "Okiru" }, { en: "to return home", jp: "帰る", romaji: "Kaeru" }, { en: "to understand", jp: "分かる", romaji: "Wakaru" }, { en: "to use", jp: "使う", romaji: "Tsukau" }, { en: "to make", jp: "作る", romaji: "Tsukuru" }, { en: "Expensive / High", jp: "高い", romaji: "Takai" }, { en: "Cheap / Low", jp: "安い", romaji: "Yasui" }, { en: "Beautiful", jp: "美しい", romaji: "Utsukushii" }, { en: "Cute", jp: "かわいい", romaji: "Kawaii" }, { en: "Fast", jp: "速い", romaji: "Hayai" }, { en: "Slow", jp: "遅い", romaji: "Osoi" }, { en: "Interesting", jp: "面白い", romaji: "Omoshiroi" }, { en: "Red", jp: "赤い", romaji: "Akai" }, { en: "Blue", jp: "青い", romaji: "Aoi" }, { en: "How much?", jp: "いくら", romaji: "Ikura" }, { en: "Which one?", jp: "どれ", romaji: "Dore" }
                 ]},
                 6: { title: "家と交通 (Home & Transport)", words: [
-                    { en: "Kitchen", jp: "台所", romaji: "Daidokoro" }, { en: "Room", jp: "部屋", romaji: "Heya" },
-                    { en: "Chair", jp: "椅子", romaji: "Isu" }, { en: "Table", jp: "テーブル", romaji: "Teeburu" },
-                    { en: "Door", jp: "ドア", romaji: "Doa" }, { en: "Window", jp: "窓", romaji: "Mado" },
-                    { en: "Bed", jp: "ベッド", romaji: "Beddo" }, { en: "Key", jp: "鍵", romaji: "Kagi" },
-                    { en: "Clock / Watch", jp: "時計", romaji: "Tokei" }, { en: "Pencil", jp: "鉛筆", romaji: "Enpitsu" },
-                    { en: "Paper", jp: "紙", romaji: "Kami" }, { en: "Photo", jp: "写真", romaji: "Shashin" },
-                    { en: "Airport", jp: "空港", romaji: "Kuukou" }, { en: "Road / Street", jp: "道", romaji: "Michi" },
-                    { en: "Map", jp: "地図", romaji: "Chizu" }, { en: "Ticket", jp: "切符", romaji: "Kippu" },
-                    { en: "Bicycle", jp: "自転車", romaji: "Jitensha" }, { en: "Airplane", jp: "飛行機", romaji: "Hikouki" },
-                    { en: "Subway", jp: "地下鉄", romaji: "Chikatetsu" }, { en: "to wait", jp: "待つ", romaji: "Matsu" },
-                    { en: "to play", jp: "遊ぶ", romaji: "Asobu" }, { en: "to swim", jp: "泳ぐ", romaji: "Oyogu" },
-                    { en: "can do", jp: "できる", romaji: "Dekiru" }, { en: "to stand", jp: "立つ", romaji: "Tatsu" },
-                    { en: "to sit", jp: "座る", romaji: "Suwaru" }, { en: "to enter", jp: "入る", romaji: "Hairu" },
-                    { en: "to leave", jp: "出る", romaji: "Deru" }, { en: "to ride", jp: "乗る", romaji: "Noru" },
-                    { en: "to get off", jp: "降りる", romaji: "Oriru" }, { en: "to walk", jp: "歩く", romaji: "Aruku" },
-                    { en: "to run", jp: "走る", romaji: "Hashiru" }, { en: "Busy", jp: "忙しい", romaji: "Isogashii" },
-                    { en: "White", jp: "白い", romaji: "Shiroi" }, { en: "Black", jp: "黒い", romaji: "Kuroi" },
-                    { en: "Lively / Healthy", jp: "元気", romaji: "Genki" }, { en: "Quiet", jp: "静か", romaji: "Shizuka" },
-                    { en: "Pretty / Clean", jp: "きれい", romaji: "Kirei" }, { en: "Very", jp: "とても", romaji: "Totemo" },
-                    { en: "A little", jp: "少し", romaji: "Sukoshi" }, { en: "Always", jp: "いつも", romaji: "Itsumo" }
+                    { en: "Kitchen", jp: "台所", romaji: "Daidokoro" }, { en: "Room", jp: "部屋", romaji: "Heya" }, { en: "Chair", jp: "椅子", romaji: "Isu" }, { en: "Table", jp: "テーブル", romaji: "Teeburu" }, { en: "Door", jp: "ドア", romaji: "Doa" }, { en: "Window", jp: "窓", romaji: "Mado" }, { en: "Bed", jp: "ベッド", romaji: "Beddo" }, { en: "Key", jp: "鍵", romaji: "Kagi" }, { en: "Clock / Watch", jp: "時計", romaji: "Tokei" }, { en: "Pencil", jp: "鉛筆", romaji: "Enpitsu" }, { en: "Paper", jp: "紙", romaji: "Kami" }, { en: "Photo", jp: "写真", romaji: "Shashin" }, { en: "Airport", jp: "空港", romaji: "Kuukou" }, { en: "Road / Street", jp: "道", romaji: "Michi" }, { en: "Map", jp: "地図", romaji: "Chizu" }, { en: "Ticket", jp: "切符", romaji: "Kippu" }, { en: "Bicycle", jp: "自転車", romaji: "Jitensha" }, { en: "Airplane", jp: "飛行機", romaji: "Hikouki" }, { en: "Subway", jp: "地下鉄", romaji: "Chikatetsu" }, { en: "to wait", jp: "待つ", romaji: "Matsu" }, { en: "to play", jp: "遊ぶ", romaji: "Asobu" }, { en: "to swim", jp: "泳ぐ", romaji: "Oyogu" }, { en: "can do", jp: "できる", romaji: "Dekiru" }, { en: "to stand", jp: "立つ", romaji: "Tatsu" }, { en: "to sit", jp: "座る", romaji: "Suwaru" }, { en: "to enter", jp: "入る", romaji: "Hairu" }, { en: "to leave", jp: "出る", romaji: "Deru" }, { en: "to ride", jp: "乗る", romaji: "Noru" }, { en: "to get off", jp: "降りる", romaji: "Oriru" }, { en: "to walk", jp: "歩く", romaji: "Aruku" }, { en: "to run", jp: "走る", romaji: "Hashiru" }, { en: "Busy", jp: "忙しい", romaji: "Isogashii" }, { en: "White", jp: "白い", romaji: "Shiroi" }, { en: "Black", jp: "黒い", romaji: "Kuroi" }, { en: "Lively / Healthy", jp: "元気", romaji: "Genki" }, { en: "Quiet", jp: "静か", romaji: "Shizuka" }, { en: "Pretty / Clean", jp: "きれい", romaji: "Kirei" }, { en: "Very", jp: "とても", romaji: "Totemo" }, { en: "A little", jp: "少し", romaji: "Sukoshi" }, { en: "Always", jp: "いつも", romaji: "Itsumo" }
                 ]},
                 7: { title: "学校と勉強 (School & Study)", words: [
-                    { en: "Monday", jp: "月曜日", romaji: "Getsuyoubi" }, { en: "Tuesday", jp: "火曜日", romaji: "Kayoubi" },
-                    { en: "Wednesday", jp: "水曜日", romaji: "Suiyoubi" }, { en: "Thursday", jp: "木曜日", romaji: "Mokuyoubi" },
-                    { en: "Friday", jp: "金曜日", romaji: "Kinyoubi" }, { en: "Saturday", jp: "土曜日", romaji: "Doyoubi" },
-                    { en: "Sunday", jp: "日曜日", romaji: "Nichiyoubi" }, { en: "Hobby", jp: "趣味", romaji: "Shumi" },
-                    { en: "Sport", jp: "スポーツ", romaji: "Supootsu" }, { en: "Work / Job", jp: "仕事", romaji: "Shigoto" },
-                    { en: "Company", jp: "会社", romaji: "Kaisha" }, { en: "to study", jp: "勉強する", romaji: "Benkyou suru" },
-                    { en: "to learn", jp: "習う", romaji: "Narau" }, { en: "to teach", jp: "教える", romaji: "Oshieru" },
-                    { en: "to remember", jp: "覚える", romaji: "Oboeru" }, { en: "to forget", jp: "忘れる", romaji: "Wasureru" },
-                    { en: "Question", jp: "質問", romaji: "Shitsumon" }, { en: "Answer", jp: "答え", romaji: "Kotae" },
-                    { en: "Classroom", jp: "教室", romaji: "Kyoushitsu" }, { en: "Homework", jp: "宿題", romaji: "Shukudai" },
-                    { en: "Exam", jp: "試験", romaji: "Shiken" }, { en: "Meaning", jp: "意味", romaji: "Imi" },
-                    { en: "Vocabulary", jp: "単語", romaji: "Tango" }, { en: "Grammar", jp: "文法", romaji: "Bunpou" },
-                    { en: "Pen", jp: "ペン", romaji: "Pen" }, { en: "Notebook", jp: "ノート", romaji: "Nooto" },
-                    { en: "Dictionary", jp: "辞書", romaji: "Jisho" }, { en: "Library", jp: "図書館", romaji: "Toshokan" },
-                    { en: "to put", jp: "置く", romaji: "Oku" }, { en: "to help", jp: "手伝う", romaji: "Tetsudau" },
-                    { en: "to hold", jp: "持つ", romaji: "Motsu" }, { en: "to take", jp: "取る", romaji: "Toru" },
-                    { en: "to begin", jp: "始める", romaji: "Hajimeru" }, { en: "to finish", jp: "終わる", romaji: "Owaru" },
-                    { en: "to open", jp: "開ける", romaji: "Akeru" }, { en: "to close", jp: "閉める", romaji: "Shimeru" },
-                    { en: "to turn on", jp: "付ける", romaji: "Tsukeru" }, { en: "to turn off", jp: "消す", romaji: "Kesu" },
-                    { en: "Happy", jp: "嬉しい", romaji: "Ureshii" }, { en: "Sad", jp: "悲しい", romaji: "Kanashii" },
-                    { en: "Painful", jp: "痛い", romaji: "Itai" }, { en: "Lonely", jp: "寂しい", romaji: "Sabishii" },
-                    { en: "Scary", jp: "怖い", romaji: "Kowai" }, { en: "Kind", jp: "優しい", romaji: "Yasashii" },
-                    { en: "Strong", jp: "強い", romaji: "Tsuyoi" }, { en: "Weak", jp: "弱い", romaji: "Yowai" }
+                    { en: "Monday", jp: "月曜日", romaji: "Getsuyoubi" }, { en: "Tuesday", jp: "火曜日", romaji: "Kayoubi" }, { en: "Wednesday", jp: "水曜日", romaji: "Suiyoubi" }, { en: "Thursday", jp: "木曜日", romaji: "Mokuyoubi" }, { en: "Friday", jp: "金曜日", romaji: "Kinyoubi" }, { en: "Saturday", jp: "土曜日", romaji: "Doyoubi" }, { en: "Sunday", jp: "日曜日", romaji: "Nichiyoubi" }, { en: "Hobby", jp: "趣味", romaji: "Shumi" }, { en: "Sport", jp: "スポーツ", romaji: "Supootsu" }, { en: "Work / Job", jp: "仕事", romaji: "Shigoto" }, { en: "Company", jp: "会社", romaji: "Kaisha" }, { en: "to study", jp: "勉強する", romaji: "Benkyou suru" }, { en: "to learn", jp: "習う", romaji: "Narau" }, { en: "to teach", jp: "教える", romaji: "Oshieru" }, { en: "to remember", jp: "覚える", romaji: "Oboeru" }, { en: "to forget", jp: "忘れる", romaji: "Wasureru" }, { en: "Question", jp: "質問", romaji: "Shitsumon" }, { en: "Answer", jp: "答え", romaji: "Kotae" }, { en: "Classroom", jp: "教室", romaji: "Kyoushitsu" }, { en: "Homework", jp: "宿題", romaji: "Shukudai" }, { en: "Exam", jp: "試験", romaji: "Shiken" }, { en: "Meaning", jp: "意味", romaji: "Imi" }, { en: "Vocabulary", jp: "単語", romaji: "Tango" }, { en: "Grammar", jp: "文法", romaji: "Bunpou" }, { en: "Pen", jp: "ペン", romaji: "Pen" }, { en: "Notebook", jp: "ノート", romaji: "Nooto" }, { en: "Dictionary", jp: "辞書", romaji: "Jisho" }, { en: "Library", jp: "図書館", romaji: "Toshokan" }, { en: "to put", jp: "置く", romaji: "Oku" }, { en: "to help", jp: "手伝う", romaji: "Tetsudau" }, { en: "to hold", jp: "持つ", romaji: "Motsu" }, { en: "to take", jp: "取る", romaji: "Toru" }, { en: "to begin", jp: "始める", romaji: "Hajimeru" }, { en: "to finish", jp: "終わる", romaji: "Owaru" }, { en: "to open", jp: "開ける", romaji: "Akeru" }, { en: "to close", jp: "閉める", romaji: "Shimeru" }, { en: "to turn on", jp: "付ける", romaji: "Tsukeru" }, { en: "to turn off", jp: "消す", romaji: "Kesu" }, { en: "Happy", jp: "嬉しい", romaji: "Ureshii" }, { en: "Sad", jp: "悲しい", romaji: "Kanashii" }, { en: "Painful", jp: "痛い", romaji: "Itai" }, { en: "Lonely", jp: "寂しい", romaji: "Sabishii" }, { en: "Scary", jp: "怖い", romaji: "Kowai" }, { en: "Kind", jp: "優しい", romaji: "Yasashii" }, { en: "Strong", jp: "強い", romaji: "Tsuyoi" }, { en: "Weak", jp: "弱い", romaji: "Yowai" }
                 ]}
             },
             2: {
                 8: { title: "自然と天気 (Nature & Weather)", words: [
-                    { en: "Sky", jp: "空", romaji: "Sora" }, { en: "Cloud", jp: "雲", romaji: "Kumo" },
-                    { en: "Wind", jp: "風", romaji: "Kaze" }, { en: "Sunny", jp: "晴れ", romaji: "Hare" },
-                    { en: "Cloudy", jp: "曇り", romaji: "Kumori" }, { en: "Star", jp: "星", romaji: "Hoshi" },
-                    { en: "River", jp: "川", romaji: "Kawa" }, { en: "Tree", jp: "木", romaji: "Ki" },
-                    { en: "Forest", jp: "森", romaji: "Mori" }, { en: "Stone", jp: "石", romaji: "Ishi" },
-                    { en: "Sound", jp: "音", romaji: "Oto" }, { en: "Light", jp: "光", romaji: "Hikari" },
-                    { en: "Spring", jp: "春", romaji: "Haru" }, { en: "Summer", jp: "夏", romaji: "Natsu" },
-                    { en: "Autumn", jp: "秋", romaji: "Aki" }, { en: "Winter", jp: "冬", romaji: "Fuyu" },
-                    { en: "Warm", jp: "暖かい", romaji: "Atatakai" }, { en: "Cool", jp: "涼しい", romaji: "Suzushii" },
-                    { en: "to lend", jp: "貸す", romaji: "Kasu" }, { en: "to borrow", jp: "借りる", romaji: "Kariru" },
-                    { en: "to return (object)", jp: "返す", romaji: "Kaesu" }, { en: "to hurry", jp: "急ぐ", romaji: "Isogu" },
-                    { en: "to call (phone)", jp: "電話を掛ける", romaji: "Denwa o kakeru" }, { en: "to need", jp: "要る", romaji: "Iru" },
-                    { en: "to make a mistake", jp: "間違える", romaji: "Machigaeru" }, { en: "to die", jp: "死ぬ", romaji: "Shinu" },
-                    { en: "Wide", jp: "広い", romaji: "Hiroi" }, { en: "Narrow", jp: "狭い", romaji: "Semai" },
-                    { en: "Heavy", jp: "重い", romaji: "Omoi" }, { en: "Light (weight)", jp: "軽い", romaji: "Karui" },
-                    { en: "Round", jp: "丸い", romaji: "Marui" }, { en: "Square", jp: "四角い", romaji: "Shikakui" },
-                    { en: "Bright", jp: "明るい", romaji: "Akarui" }, { en: "Dark", jp: "暗い", romaji: "Kurai" },
-                    { en: "Important", jp: "大切", romaji: "Taisetsu" }, { en: "Free (time)", jp: "暇", romaji: "Hima" },
-                    { en: "Safe", jp: "安全", romaji: "Anzen" }, { en: "Dangerous", jp: "危ない", romaji: "Abunai" },
-                    { en: "Body", jp: "体", romaji: "Karada" }, { en: "Head", jp: "頭", romaji: "Atama" },
-                    { en: "Face", jp: "顔", romaji: "Kao" }, { en: "Eye", jp: "目", romaji: "Me" },
-                    { en: "Nose", jp: "鼻", romaji: "Hana" }, { en: "Mouth", jp: "口", romaji: "Kuchi" },
-                    { en: "Ear", jp: "耳", romaji: "Mimi" }, { en: "Hand / Arm", jp: "手", romaji: "Te" },
-                    { en: "Leg / Foot", jp: "足", romaji: "Ashi" }
+                    { en: "Sky", jp: "空", romaji: "Sora" }, { en: "Cloud", jp: "雲", romaji: "Kumo" }, { en: "Wind", jp: "風", romaji: "Kaze" }, { en: "Sunny", jp: "晴れ", romaji: "Hare" }, { en: "Cloudy", jp: "曇り", romaji: "Kumori" }, { en: "Star", jp: "星", romaji: "Hoshi" }, { en: "River", jp: "川", romaji: "Kawa" }, { en: "Tree", jp: "木", romaji: "Ki" }, { en: "Forest", jp: "森", romaji: "Mori" }, { en: "Stone", jp: "石", romaji: "Ishi" }, { en: "Sound", jp: "音", romaji: "Oto" }, { en: "Light", jp: "光", romaji: "Hikari" }, { en: "Spring", jp: "春", romaji: "Haru" }, { en: "Summer", jp: "夏", romaji: "Natsu" }, { en: "Autumn", jp: "秋", romaji: "Aki" }, { en: "Winter", jp: "冬", romaji: "Fuyu" }, { en: "Warm", jp: "暖かい", romaji: "Atatakai" }, { en: "Cool", jp: "涼しい", romaji: "Suzushii" }, { en: "to lend", jp: "貸す", romaji: "Kasu" }, { en: "to borrow", jp: "借りる", romaji: "Kariru" }, { en: "to return (object)", jp: "返す", romaji: "Kaesu" }, { en: "to hurry", jp: "急ぐ", romaji: "Isogu" }, { en: "to call (phone)", jp: "電話を掛ける", romaji: "Denwa o kakeru" }, { en: "to need", jp: "要る", romaji: "Iru" }, { en: "to make a mistake", jp: "間違える", romaji: "Machigaeru" }, { en: "to die", jp: "死ぬ", romaji: "Shinu" }, { en: "Wide", jp: "広い", romaji: "Hiroi" }, { en: "Narrow", jp: "狭い", romaji: "Semai" }, { en: "Heavy", jp: "重い", romaji: "Omoi" }, { en: "Light (weight)", jp: "軽い", romaji: "Karui" }, { en: "Round", jp: "丸い", romaji: "Marui" }, { en: "Square", jp: "四角い", romaji: "Shikakui" }, { en: "Bright", jp: "明るい", romaji: "Akarui" }, { en: "Dark", jp: "暗い", romaji: "Kurai" }, { en: "Important", jp: "大切", romaji: "Taisetsu" }, { en: "Free (time)", jp: "暇", romaji: "Hima" }, { en: "Safe", jp: "安全", romaji: "Anzen" }, { en: "Dangerous", jp: "危ない", romaji: "Abunai" }, { en: "Body", jp: "体", romaji: "Karada" }, { en: "Head", jp: "頭", romaji: "Atama" }, { en: "Face", jp: "顔", romaji: "Kao" }, { en: "Eye", jp: "目", romaji: "Me" }, { en: "Nose", jp: "鼻", romaji: "Hana" }, { en: "Mouth", jp: "口", romaji: "Kuchi" }, { en: "Ear", jp: "耳", romaji: "Mimi" }, { en: "Hand / Arm", jp: "手", romaji: "Te" }, { en: "Leg / Foot", jp: "足", romaji: "Ashi" }
                 ]},
                  9: { title: "社会と文化 (Society & Culture)", words: [
-                    { en: "Shopping", jp: "買い物", romaji: "Kaimono" }, { en: "Walk / Stroll", jp: "散歩", romaji: "Sanpo" },
-                    { en: "Party", jp: "パーティー", romaji: "Paatii" }, { en: "Promise", jp: "約束", romaji: "Yakusoku" },
-                    { en: "Problem", jp: "問題", romaji: "Mondai" }, { en: "Voice", jp: "声", romaji: "Koe" },
-                    { en: "Feeling / Mood", jp: "気持ち", romaji: "Kimochi" }, { en: "Color", jp: "色", romaji: "Iro" },
-                    { en: "Yellow", jp: "黄色", romaji: "Kiiro" }, { en: "Green", jp: "緑", romaji: "Midori" },
-                    { en: "Brown", jp: "茶色", romaji: "Chairo" }, { en: "Stomach", jp: "お腹", romaji: "Onaka" },
-                    { en: "Back", jp: "背中", romaji: "Senaka" }, { en: "Heart / Mind", jp: "心", romaji: "Kokoro" },
-                    { en: "World", jp: "世界", romaji: "Sekai" }, { en: "Society", jp: "社会", romaji: "Shakai" },
-                    { en: "Culture", jp: "文化", romaji: "Bunka" }, { en: "History", jp: "歴史", romaji: "Rekishi" },
-                    { en: "Politics", jp: "政治", romaji: "Seiji" }, { en: "Economy", jp: "経済", romaji: "Keizai" },
-                    { en: "Future", jp: "未来", romaji: "Mirai" }, { en: "Dream", jp: "夢", romaji: "Yume" },
-                    { en: "Reason", jp: "理由", romaji: "Riyuu" }, { en: "to sing", jp: "歌う", romaji: "Utau" },
-                    { en: "to dance", jp: "踊る", romaji: "Odoru" }, { en: "to give", jp: "あげる", romaji: "Ageru" },
-                    { en: "to receive", jp: "もらう", romaji: "Morau" }, { en: "to laugh", jp: "笑う", romaji: "Warau" },
-                    { en: "to cry", jp: "泣く", romaji: "Naku" }, { en: "to be angry", jp: "怒る", romaji: "Okoru" },
-                    { en: "to worry", jp: "心配する", romaji: "Shinpai suru" }, { en: "to be surprised", jp: "びっくりする", romaji: "Bikkuri suru" },
-                    { en: "to work", jp: "働く", romaji: "Hataraku" }, { en: "to rest", jp: "休む", romaji: "Yasumu" },
-                    { en: "Young", jp: "若い", romaji: "Wakai" }, { en: "Old (person)", jp: "年を取っている", romaji: "Toshi o totteiru" },
-                    { en: "Tall (height)", jp: "背が高い", romaji: "Se ga takai" }, { en: "Short (height)", jp: "背が低い", romaji: "Se ga hikui" },
-                    { en: "Thin / Slender", jp: "細い", romaji: "Hosoi" }, { en: "Fat / Thick", jp: "太い", romaji: "Futoi" },
-                    { en: "Boring", jp: "つまらない", romaji: "Tsumaranai" }, { en: "Famous", jp: "有名", romaji: "Yuumei" },
-                    { en: "Kind / Considerate", jp: "親切", romaji: "Shinsetsu" }, { en: "Convenient", jp: "便利", romaji: "Benri" },
-                    { en: "Inconvenient", jp: "不便", romaji: "Fuben" }, { en: "Skillful", jp: "上手", romaji: "Jouzu" },
-                    { en: "Unskillful", jp: "下手", romaji: "Heta" }
+                    { en: "Shopping", jp: "買い物", romaji: "Kaimono" }, { en: "Walk / Stroll", jp: "散歩", romaji: "Sanpo" }, { en: "Party", jp: "パーティー", romaji: "Paatii" }, { en: "Promise", jp: "約束", romaji: "Yakusoku" }, { en: "Problem", jp: "問題", romaji: "Mondai" }, { en: "Voice", jp: "声", romaji: "Koe" }, { en: "Feeling / Mood", jp: "気持ち", romaji: "Kimochi" }, { en: "Color", jp: "色", romaji: "Iro" }, { en: "Yellow", jp: "黄色", romaji: "Kiiro" }, { en: "Green", jp: "緑", romaji: "Midori" }, { en: "Brown", jp: "茶色", romaji: "Chairo" }, { en: "Stomach", jp: "お腹", romaji: "Onaka" }, { en: "Back", jp: "背中", romaji: "Senaka" }, { en: "Heart / Mind", jp: "心", romaji: "Kokoro" }, { en: "World", jp: "世界", romaji: "Sekai" }, { en: "Society", jp: "社会", romaji: "Shakai" }, { en: "Culture", jp: "文化", romaji: "Bunka" }, { en: "History", jp: "歴史", romaji: "Rekishi" }, { en: "Politics", jp: "政治", romaji: "Seiji" }, { en: "Economy", jp: "経済", romaji: "Keizai" }, { en: "Future", jp: "未来", romaji: "Mirai" }, { en: "Dream", jp: "夢", romaji: "Yume" }, { en: "Reason", jp: "理由", romaji: "Riyuu" }, { en: "to sing", jp: "歌う", romaji: "Utau" }, { en: "to dance", jp: "踊る", romaji: "Odoru" }, { en: "to give", jp: "あげる", romaji: "Ageru" }, { en: "to receive", jp: "もらう", romaji: "Morau" }, { en: "to laugh", jp: "笑う", romaji: "Warau" }, { en: "to cry", jp: "泣く", romaji: "Naku" }, { en: "to be angry", jp: "怒る", romaji: "Okoru" }, { en: "to worry", jp: "心配する", romaji: "Shinpai suru" }, { en: "to be surprised", jp: "びっくりする", romaji: "Bikkuri suru" }, { en: "to work", jp: "働く", romaji: "Hataraku" }, { en: "to rest", jp: "休む", romaji: "Yasumu" }, { en: "Young", jp: "若い", romaji: "Wakai" }, { en: "Old (person)", jp: "年を取っている", romaji: "Toshi o totteiru" }, { en: "Tall (height)", jp: "背が高い", romaji: "Se ga takai" }, { en: "Short (height)", jp: "背が低い", romaji: "Se ga hikui" }, { en: "Thin / Slender", jp: "細い", romaji: "Hosoi" }, { en: "Fat / Thick", jp: "太い", romaji: "Futoi" }, { en: "Boring", jp: "つまらない", romaji: "Tsumaranai" }, { en: "Famous", jp: "有名", romaji: "Yuumei" }, { en: "Kind / Considerate", jp: "親切", romaji: "Shinsetsu" }, { en: "Convenient", jp: "便利", romaji: "Benri" }, { en: "Inconvenient", jp: "不便", romaji: "Fuben" }, { en: "Skillful", jp: "上手", romaji: "Jouzu" }, { en: "Unskillful", jp: "下手", romaji: "Heta" }
                 ]},
-                // Additional days for week 2
                 10: { title: "健康と体 (Health & Body)", words: [
-                    { en: "to catch a cold", jp: "風邪をひく", romaji: "Kaze o hiku" },
-                    { en: "to be injured", jp: "けがをする", romaji: "Kega o suru" },
-                    { en: "Fever", jp: "熱", romaji: "Netsu" },
-                    { en: "Cough", jp: "咳", romaji: "Seki" },
-                    { en: "Headache", jp: "頭痛", romaji: "Zutsuu" },
-                    { en: "Health", jp: "健康", romaji: "Kenkou" },
-                    { en: "Medicine", jp: "薬", romaji: "Kusuri" },
-                    { en: "to be hospitalized", jp: "入院する", romaji: "Nyuuin suru" },
-                    { en: "to leave hospital", jp: "退院する", romaji: "Taiin suru" },
-                    { en: "to look for", jp: "探す", romaji: "Sagasu" },
-                    { en: "to be late", jp: "遅れる", romaji: "Okureru" },
-                    { en: "to be on time", jp: "間に合う", romaji: "Ma ni au" },
-                    { en: "to pick up", jp: "拾う", romaji: "Hirou" },
-                    { en: "to throw away", jp: "捨てる", romaji: "Suteru" },
-                    { en: "to contact", jp: "連絡する", romaji: "Renraku suru" },
-                    { en: "Clothing", jp: "服", romaji: "Fuku" },
-                    { en: "Hat", jp: "帽子", romaji: "Boushi" },
-                    { en: "Glasses", jp: "眼鏡", romaji: "Megane" },
-                    { en: "Socks", jp: "靴下", romaji: "Kutsushita" },
-                    { en: "Coat", jp: "コート", romaji: "Kooto" },
-                    { en: "Air", jp: "空気", romaji: "Kuuki" },
-                    { en: "Taste", jp: "味", romaji: "Aji" },
-                    { en: "Deep", jp: "深い", romaji: "Fukai" },
-                    { en: "Shallow", jp: "浅い", romaji: "Asai" },
-                    { en: "Hard", jp: "硬い", romaji: "Katai" },
-                    { en: "Soft", jp: "柔らかい", romaji: "Yawarakai" },
-                    { en: "Diligent", jp: "真面目", romaji: "Majime" },
-                    { en: "Impossible", jp: "無理", romaji: "Muri" },
-                    { en: "Certainly", jp: "きっと", romaji: "Kitto" },
-                    { en: "Together", jp: "一緒に", romaji: "Issho ni" },
-                    { en: "Probably", jp: "多分", romaji: "Tabun" },
-                    { en: "Slowly", jp: "ゆっくり", romaji: "Yukkuri" },
-                    { en: "Really", jp: "本当に", romaji: "Hontou ni" },
-                    { en: "Soon", jp: "もうすぐ", romaji: "Mousugu" },
-                    { en: "Counter (people)", jp: "-人", romaji: "-nin" },
-                    { en: "Counter (flat)", jp: "-枚", romaji: "-mai" },
-                    { en: "Counter (long)", jp: "-本", romaji: "-hon" },
-                    { en: "Counter (small)", jp: "-個", romaji: "-ko" },
-                    { en: "Counter (books)", jp: "-冊", romaji: "-satsu" },
-                    { en: "Counter (times)", jp: "-回", romaji: "-kai" }
+                    { en: "to catch a cold", jp: "風邪をひく", romaji: "Kaze o hiku" }, { en: "to be injured", jp: "けがをする", romaji: "Kega o suru" }, { en: "Fever", jp: "熱", romaji: "Netsu" }, { en: "Cough", jp: "咳", romaji: "Seki" }, { en: "Headache", jp: "頭痛", romaji: "Zutsuu" }, { en: "Health", jp: "健康", romaji: "Kenkou" }, { en: "Medicine", jp: "薬", romaji: "Kusuri" }, { en: "to be hospitalized", jp: "入院する", romaji: "Nyuuin suru" }, { en: "to leave hospital", jp: "退院する", romaji: "Taiin suru" }, { en: "to look for", jp: "探す", romaji: "Sagasu" }, { en: "to be late", jp: "遅れる", romaji: "Okureru" }, { en: "to be on time", jp: "間に合う", romaji: "Ma ni au" }, { en: "to pick up", jp: "拾う", romaji: "Hirou" }, { en: "to throw away", jp: "捨てる", romaji: "Suteru" }, { en: "to contact", jp: "連絡する", romaji: "Renraku suru" }, { en: "Clothing", jp: "服", romaji: "Fuku" }, { en: "Hat", jp: "帽子", romaji: "Boushi" }, { en: "Glasses", jp: "眼鏡", romaji: "Megane" }, { en: "Socks", jp: "靴下", romaji: "Kutsushita" }, { en: "Coat", jp: "コート", romaji: "Kooto" }, { en: "Air", jp: "空気", romaji: "Kuuki" }, { en: "Taste", jp: "味", romaji: "Aji" }, { en: "Deep", jp: "深い", romaji: "Fukai" }, { en: "Shallow", jp: "浅い", romaji: "Asai" }, { en: "Hard", jp: "硬い", romaji: "Katai" }, { en: "Soft", jp: "柔らかい", romaji: "Yawarakai" }, { en: "Diligent", jp: "真面目", romaji: "Majime" }, { en: "Impossible", jp: "無理", romaji: "Muri" }, { en: "Certainly", jp: "きっと", romaji: "Kitto" }, { en: "Together", jp: "一緒に", romaji: "Issho ni" }, { en: "Probably", jp: "多分", romaji: "Tabun" }, { en: "Slowly", jp: "ゆっくり", romaji: "Yukkuri" }, { en: "Really", jp: "本当に", romaji: "Hontou ni" }, { en: "Soon", jp: "もうすぐ", romaji: "Mousugu" }, { en: "Counter (people)", jp: "-人", romaji: "-nin" }, { en: "Counter (flat)", jp: "-枚", romaji: "-mai" }, { en: "Counter (long)", jp: "-本", romaji: "-hon" }, { en: "Counter (small)", jp: "-個", romaji: "-ko" }, { en: "Counter (books)", jp: "-冊", romaji: "-satsu" }, { en: "Counter (times)", jp: "-回", romaji: "-kai" }
                 ]},
                 11: { title: "料理と買い物 (Cooking & Shopping)", words: [
-                    {en: "to cook", jp: "料理する", romaji: "ryouri suru"},
-                    {en: "to cut", jp: "切る", romaji: "kiru"},
-                    {en: "to bake/grill", jp: "焼く", romaji: "yaku"},
-                    {en: "to boil", jp: "茹でる", romaji: "yuderu"},
-                    {en: "to mix", jp: "混ぜる", romaji: "mazeru"},
-                    {en: "Sugar", jp: "砂糖", romaji: "satou"},
-                    {en: "Salt", jp: "塩", romaji: "shio"},
-                    {en: "Soy sauce", jp: "醤油", romaji: "shouyu"},
-                    {en: "Oil", jp: "油", romaji: "abura"},
-                    {en: "Department store", jp: "デパート", romaji: "depaato"},
-                    {en: "Supermarket", jp: "スーパー", romaji: "suupaa"},
-                    {en: "Price", jp: "値段", romaji: "nedan"},
-                    {en: "Cash", jp: "現金", romaji: "genkin"},
-                    {en: "Credit Card", jp: "クレジットカード", romaji: "kurejitto kaado"},
-                    {en: "Receipt", jp: "レシート", romaji: "reshiito"},
-                    {en: "to compare", jp: "比べる", romaji: "kuraberu"},
-                    {en: "to continue", jp: "続ける", romaji: "tsuzukeru"},
-                    {en: "to think/consider", jp: "考える", romaji: "kangaeru"},
-                    {en: "to answer", jp: "答える", romaji: "kotaeru"},
-                    {en: "to get dirty", jp: "汚れる", romaji: "yogoreru"},
-                    {en: "to invite", jp: "招待する", romaji: "shoutai suru"},
-                    {en: "Opinion", jp: "意見", romaji: "iken"},
-                    {en: "Interest", jp: "興味", romaji: "kyoumi"},
-                    {en: "Population", jp: "人口", romaji: "jinkou"},
-                    {en: "Pronunciation", jp: "発音", romaji: "hatsuon"},
-                    {en: "Terrible/awful", jp: "ひどい", romaji: "hidoi"},
-                    {en: "Rare/unusual", jp: "珍しい", romaji: "mezurashii"},
-                    {en: "Polite", jp: "丁寧", romaji: "teinei"},
-                    {en: "Special", jp: "特別", romaji: "tokubetsu"},
-                    {en: "Free/liberal", jp: "自由", romaji: "jiyuu"},
-                    {en: "Especially", jp: "特に", romaji: "tokuni"},
-                    {en: "Clearly", jp: "はっきり", romaji: "hakkiri"},
-                    {en: "Counter (floors)", jp: "-階", romaji: "-kai"},
-                    {en: "to sell", jp: "売る", romaji: "uru"},
-                    {en: "to pay", jp: "払う", romaji: "harau"},
-                    {en: "to choose", jp: "選ぶ", romaji: "erabu"},
-                    {en: "to decide", jp: "決める", romaji: "kimeru"},
-                    {en: "Office worker", jp: "会社員", romaji: "kaishain"},
-                    {en: "President (company)", jp: "社長", romaji: "shachou"},
-                    {en: "Meeting", jp: "会議", romaji: "kaigi"},
-                    {en: "Business trip", jp: "出張", romaji: "shucchou"}
+                    {en: "to cook", jp: "料理する", romaji: "ryouri suru"}, {en: "to cut", jp: "切る", romaji: "kiru"}, {en: "to bake/grill", jp: "焼く", romaji: "yaku"}, {en: "to boil", jp: "茹でる", romaji: "yuderu"}, {en: "to mix", jp: "混ぜる", romaji: "mazeru"}, {en: "Sugar", jp: "砂糖", romaji: "satou"}, {en: "Salt", jp: "塩", romaji: "shio"}, {en: "Soy sauce", jp: "醤油", romaji: "shouyu"}, {en: "Oil", jp: "油", romaji: "abura"}, {en: "Department store", jp: "デパート", romaji: "depaato"}, {en: "Supermarket", jp: "スーパー", romaji: "suupaa"}, {en: "Price", jp: "値段", romaji: "nedan"}, {en: "Cash", jp: "現金", romaji: "genkin"}, {en: "Credit Card", jp: "クレジットカード", romaji: "kurejitto kaado"}, {en: "Receipt", jp: "レシート", romaji: "reshiito"}, {en: "to compare", jp: "比べる", romaji: "kuraberu"}, {en: "to continue", jp: "続ける", romaji: "tsuzukeru"}, {en: "to think/consider", jp: "考える", romaji: "kangaeru"}, {en: "to answer", jp: "答える", romaji: "kotaeru"}, {en: "to get dirty", jp: "汚れる", romaji: "yogoreru"}, {en: "to invite", jp: "招待する", romaji: "shoutai suru"}, {en: "Opinion", jp: "意見", romaji: "iken"}, {en: "Interest", jp: "興味", romaji: "kyoumi"}, {en: "Population", jp: "人口", romaji: "jinkou"}, {en: "Pronunciation", jp: "発音", romaji: "hatsuon"}, {en: "Terrible/awful", jp: "ひどい", romaji: "hidoi"}, {en: "Rare/unusual", jp: "珍しい", romaji: "mezurashii"}, {en: "Polite", jp: "丁寧", romaji: "teinei"}, {en: "Special", jp: "特別", romaji: "tokubetsu"}, {en: "Free/liberal", jp: "自由", romaji: "jiyuu"}, {en: "Especially", jp: "特に", romaji: "tokuni"}, {en: "Clearly", jp: "はっきり", romaji: "hakkiri"}, {en: "Counter (floors)", jp: "-階", romaji: "-kai"}, {en: "to sell", jp: "売る", romaji: "uru"}, {en: "to pay", jp: "払う", romaji: "harau"}, {en: "to choose", jp: "選ぶ", romaji: "erabu"}, {en: "to decide", jp: "決める", romaji: "kimeru"}, {en: "Office worker", jp: "会社員", romaji: "kaishain"}, {en: "President (company)", jp: "社長", romaji: "shachou"}, {en: "Meeting", jp: "会議", romaji: "kaigi"}, {en: "Business trip", jp: "出張", romaji: "shucchou"}
                 ]},
                  12: { title: "動詞の活用 (Verb Usage)", words: [
-                    {en: "to be visible", jp: "見える", romaji: "mieru"},
-                    {en: "to be audible", jp: "聞こえる", romaji: "kikoeru"},
-                    {en: "to get better/be cured", jp: "治る", romaji: "naoru"},
-                    {en: "to fix/repair", jp: "直す", romaji: "naosu"},
-                    {en: "to get lost/disappear", jp: "無くなる", romaji: "nakunaru"},
-                    {en: "to be sufficient", jp: "足りる", romaji: "tariru"},
-                    {en: "to get used to", jp: "慣れる", romaji: "nareru"},
-                    {en: "to prepare", jp: "準備する", romaji: "junbi suru"},
-                    {en: "to move (house)", jp: "引っ越す", romaji: "hikkosu"},
-                    {en: "to tidy up", jp: "片付ける", romaji: "katadzukeru"},
-                    {en: "Part-time job", jp: "アルバイト", romaji: "arubaito"},
-                    {en: "Life/living", jp: "生活", romaji: "seikatsu"},
-                    {en: "International", jp: "国際", romaji: "kokusai"},
-                    {en: "Industry", jp: "産業", romaji: "sangyou"},
-                    {en: "Law", jp: "法律", romaji: "houritsu"},
-                    {en: "War/Peace", jp: "戦争/平和", romaji: "sensou/heiwa"},
-                    {en: "Wonderful", jp: "素晴らしい", romaji: "subarashii"},
-                    {en: "Shy/embarrassed", jp: "恥ずかしい", romaji: "hazukashii"},
-                    {en: "No good/impossible", jp: "だめ", romaji: "dame"},
-                    {en: "Necessary", jp: "必要", romaji: "hitsuyou"},
-                    {en: "Enthusiastic", jp: "熱心", romaji: "nesshin"},
-                    {en: "Recently", jp: "最近", romaji: "saikin"},
-                    {en: "First of all", jp: "まず", romaji: "mazu"},
-                    {en: "Finally", jp: "やっと", romaji: "yatto"},
-                    {en: "to scold", jp: "叱る", romaji: "shikaru"},
-                    {en: "to step on", jp: "踏む", romaji: "fumu"},
-                    {en: "to steal", jp: "盗む", romaji: "nusumu"},
-                    {en: "to hit", jp: "打つ", romaji: "utsu"},
-                    {en: "Accident", jp: "事故", romaji: "jiko"},
-                    {en: "Earthquake", jp: "地震", romaji: "jishin"},
-                    {en: "Typhoon", jp: "台風", romaji: "taifuu"},
-                    {en: "Reception desk", jp: "受付", romaji: "uketsuke"},
-                    {en: "Parking lot", jp: "駐車場", romaji: "chuushajou"},
-                    {en: "Countryside", jp: "田舎", romaji: "inaka"},
-                    {en: "Lecture", jp: "講義", romaji: "kougi"},
-                    {en: "Plan", jp: "計画", romaji: "keikaku"},
-                    {en: "Bitter", jp: "苦い", romaji: "nigai"},
-                    {en: "Unpleasant", jp: "嫌", romaji: "iya"},
-                    {en: "Mostly/usually", jp: "たいてい", romaji: "taitei"},
-                    {en: "Never (with negative)", jp: "決して", romaji: "kesshite"},
-                    {en: "As much as possible", jp: "なるべく", romaji: "narubeku"}
+                    {en: "to be visible", jp: "見える", romaji: "mieru"}, {en: "to be audible", jp: "聞こえる", romaji: "kikoeru"}, {en: "to get better/be cured", jp: "治る", romaji: "naoru"}, {en: "to fix/repair", jp: "直す", romaji: "naosu"}, {en: "to get lost/disappear", jp: "無くなる", romaji: "nakunaru"}, {en: "to be sufficient", jp: "足りる", romaji: "tariru"}, {en: "to get used to", jp: "慣れる", romaji: "nareru"}, {en: "to prepare", jp: "準備する", romaji: "junbi suru"}, {en: "to move (house)", jp: "引っ越す", romaji: "hikkosu"}, {en: "to tidy up", jp: "片付ける", romaji: "katadzukeru"}, {en: "Part-time job", jp: "アルバイト", romaji: "arubaito"}, {en: "Life/living", jp: "生活", romaji: "seikatsu"}, {en: "International", jp: "国際", romaji: "kokusai"}, {en: "Industry", jp: "産業", romaji: "sangyou"}, {en: "Law", jp: "法律", romaji: "houritsu"}, {en: "War/Peace", jp: "戦争/平和", romaji: "sensou/heiwa"}, {en: "Wonderful", jp: "素晴らしい", romaji: "subarashii"}, {en: "Shy/embarrassed", jp: "恥ずかしい", romaji: "hazukashii"}, {en: "No good/impossible", jp: "だめ", romaji: "dame"}, {en: "Necessary", jp: "必要", romaji: "hitsuyou"}, {en: "Enthusiastic", jp: "熱心", romaji: "nesshin"}, {en: "Recently", jp: "最近", romaji: "saikin"}, {en: "First of all", jp: "まず", romaji: "mazu"}, {en: "Finally", jp: "やっと", romaji: "yatto"}, {en: "to scold", jp: "叱る", romaji: "shikaru"}, {en: "to step on", jp: "踏む", romaji: "fumu"}, {en: "to steal", jp: "盗む", romaji: "nusumu"}, {en: "to hit", jp: "打つ", romaji: "utsu"}, {en: "Accident", jp: "事故", romaji: "jiko"}, {en: "Earthquake", jp: "地震", romaji: "jishin"}, {en: "Typhoon", jp: "台風", romaji: "taifuu"}, {en: "Reception desk", jp: "受付", romaji: "uketsuke"}, {en: "Parking lot", jp: "駐車場", romaji: "chuushajou"}, {en: "Countryside", jp: "田舎", romaji: "inaka"}, {en: "Lecture", jp: "講義", romaji: "kougi"}, {en: "Plan", jp: "計画", romaji: "keikaku"}, {en: "Bitter", jp: "苦い", romaji: "nigai"}, {en: "Unpleasant", jp: "嫌", romaji: "iya"}, {en: "Mostly/usually", jp: "たいてい", romaji: "taitei"}, {en: "Never (with negative)", jp: "決して", romaji: "kesshite"}, {en: "As much as possible", jp: "なるべく", romaji: "narubeku"}
                 ]},
                  13: { title: "案内と紹介 (Guidance & Intros)", words: [
-                    {en: "to greet", jp: "挨拶する", romaji: "aisatsu suru"},
-                    {en: "to introduce", jp: "紹介する", romaji: "shoukai suru"},
-                    {en: "to guide/show around", jp: "案内する", romaji: "annai suru"},
-                    {en: "to translate", jp: "翻訳する", romaji: "honyaku suru"},
-                    {en: "to reserve/book", jp: "予約する", romaji: "yoyaku suru"},
-                    {en: "to attend", jp: "出席する", romaji: "shusseki suru"},
-                    {en: "to depart", jp: "出発する", romaji: "shuppatsu suru"},
-                    {en: "to be careful", jp: "注意する", romaji: "chuui suru"},
-                    {en: "to fail", jp: "失敗する", romaji: "shippai suru"},
-                    {en: "to apologize", jp: "謝る", romaji: "ayamaru"},
-                    {en: "to believe", jp: "信じる", romaji: "shinjiru"},
-                    {en: "to raise/bring up", jp: "育てる", romaji: "sodateru"},
-                    {en: "to carry/transport", jp: "運ぶ", romaji: "hakobu"},
-                    {en: "Greeting", jp: "挨拶", romaji: "aisatsu"},
-                    {en: "Reservation", jp: "予約", romaji: "yoyaku"},
-                    {en: "Novel", jp: "小説", romaji: "shousetsu"},
-                    {en: "Diary", jp: "日記", romaji: "nikki"},
-                    {en: "Son/Daughter", jp: "息子/娘", romaji: "musuko/musume"},
-                    {en: "Senior (senpai)", jp: "先輩", romaji: "senpai"},
-                    {en: "Junior (kouhai)", jp: "後輩", romaji: "kouhai"},
-                    {en: "Myself/yourself", jp: "自分", romaji: "jibun"},
-                    {en: "Place/location", jp: "場所", romaji: "basho"},
-                    {en: "Neighborhood", jp: "近所", romaji: "kinjo"},
-                    {en: "Factory", jp: "工場", romaji: "koujou"},
-                    {en: "Correct/right", jp: "正しい", romaji: "tadashii"},
-                    {en: "Complex/complicated", jp: "複雑", romaji: "fukuzatsu"},
-                    {en: "Prosperous/popular", jp: "盛ん", romaji: "sakan"},
-                    {en: "Usually/commonly", jp: "普通", romaji: "futsuu"},
-                    {en: "As expected", jp: "やはり", romaji: "yahari"},
-                    {en: "If", jp: "もし", romaji: "moshi"},
-                    {en: "to be broken", jp: "壊れる", romaji: "kowareru"},
-                    {en: "to break (something)", jp: "壊す", romaji: "kowasu"},
-                    {en: "to be found", jp: "見つかる", romaji: "mitsukaru"},
-                    {en: "to find", jp: "見つける", romaji: "mitsukeru"},
-                    {en: "to be helpful", jp: "役に立つ", romaji: "yaku ni tatsu"},
-                    {en: "to get fat", jp: "太る", romaji: "futoru"},
-                    {en: "to get thin", jp: "痩せる", romaji: "yaseru"},
-                    {en: "to respect", jp: "尊敬する", romaji: "sonkei suru"},
-                    {en: "Husband/Wife", jp: "夫/妻", romaji: "otto/tsuma"},
-                    {en: "Guest/customer", jp: "客", romaji: "kyaku"},
-                    {en: "Amazing/terrific", jp: "すごい", romaji: "sugoi"}
+                    {en: "to greet", jp: "挨拶する", romaji: "aisatsu suru"}, {en: "to introduce", jp: "紹介する", romaji: "shoukai suru"}, {en: "to guide/show around", jp: "案内する", romaji: "annai suru"}, {en: "to translate", jp: "翻訳する", romaji: "honyaku suru"}, {en: "to reserve/book", jp: "予約する", romaji: "yoyaku suru"}, {en: "to attend", jp: "出席する", romaji: "shusseki suru"}, {en: "to depart", jp: "出発する", romaji: "shuppatsu suru"}, {en: "to be careful", jp: "注意する", romaji: "chuui suru"}, {en: "to fail", jp: "失敗する", romaji: "shippai suru"}, {en: "to apologize", jp: "謝る", romaji: "ayamaru"}, {en: "to believe", jp: "信じる", romaji: "shinjiru"}, {en: "to raise/bring up", jp: "育てる", romaji: "sodateru"}, {en: "to carry/transport", jp: "運ぶ", romaji: "hakobu"}, {en: "Greeting", jp: "挨拶", romaji: "aisatsu"}, {en: "Reservation", jp: "予約", romaji: "yoyaku"}, {en: "Novel", jp: "小説", romaji: "shousetsu"}, {en: "Diary", jp: "日記", romaji: "nikki"}, {en: "Son/Daughter", jp: "息子/娘", romaji: "musuko/musume"}, {en: "Senior (senpai)", jp: "先輩", romaji: "senpai"}, {en: "Junior (kouhai)", jp: "後輩", romaji: "kouhai"}, {en: "Myself/yourself", jp: "自分", romaji: "jibun"}, {en: "Place/location", jp: "場所", romaji: "basho"}, {en: "Neighborhood", jp: "近所", romaji: "kinjo"}, {en: "Factory", jp: "工場", romaji: "koujou"}, {en: "Correct/right", jp: "正しい", romaji: "tadashii"}, {en: "Complex/complicated", jp: "複雑", romaji: "fukuzatsu"}, {en: "Prosperous/popular", jp: "盛ん", romaji: "sakan"}, {en: "Usually/commonly", jp: "普通", romaji: "futsuu"}, {en: "As expected", jp: "やはり", romaji: "yahari"}, {en: "If", jp: "もし", romaji: "moshi"}, {en: "to be broken", jp: "壊れる", romaji: "kowareru"}, {en: "to break (something)", jp: "壊す", romaji: "kowasu"}, {en: "to be found", jp: "見つかる", romaji: "mitsukaru"}, {en: "to find", jp: "見つける", romaji: "mitsukeru"}, {en: "to be helpful", jp: "役に立つ", romaji: "yaku ni tatsu"}, {en: "to get fat", jp: "太る", romaji: "futoru"}, {en: "to get thin", jp: "痩せる", romaji: "yaseru"}, {en: "to respect", jp: "尊敬する", romaji: "sonkei suru"}, {en: "Husband/Wife", jp: "夫/妻", romaji: "otto/tsuma"}, {en: "Guest/customer", jp: "客", romaji: "kyaku"}, {en: "Amazing/terrific", jp: "すごい", romaji: "sugoi"}
                 ]},
                  14: { title: "尊敬語と謙譲語 (Respectful Language)", words: [
-                    {en: "to give (to me)", jp: "くれる", romaji: "kureru"},
-                    {en: "to give (humble)", jp: "下さる", romaji: "kudasaru"},
-                    {en: "to give (respectful)", jp: "差し上げる", romaji: "sashiageru"},
-                    {en: "to receive (humble)", jp: "いただく", romaji: "itadaku"},
-                    {en: "to do (humble)", jp: "致す", romaji: "itasu"},
-                    {en: "to do (respectful)", jp: "なさる", romaji: "nasaru"},
-                    {en: "to say (humble)", jp: "申す", romaji: "mousu"},
-                    {en: "to be/go/come (respectful)", jp: "いらっしゃる", romaji: "irassharu"},
-                    {en: "to eat/drink (respectful)", jp: "召し上がる", romaji: "meshiagaru"},
-                    {en: "to see (respectful)", jp: "ご覧になる", romaji: "goran ni naru"},
-                    {en: "to know (respectful)", jp: "ご存知", romaji: "gozonji"},
-                    {en: "to throw", jp: "投げる", romaji: "nageru"},
-                    {en: "to touch", jp: "触る", romaji: "sawaru"},
-                    {en: "to gather", jp: "集まる", romaji: "atsumaru"},
-                    {en: "to collect", jp: "集める", romaji: "atsumeru"},
-                    {en: "Escalator/Elevator", jp: "エスカレーター/エレベーター", romaji: "esukareetaa/erebeetaa"},
-                    {en: "Air conditioning/Heating", jp: "冷房/暖房", romaji: "reibou/danbou"},
-                    {en: "Computer", jp: "コンピューター", romaji: "konpyuutaa"},
-                    {en: "Report", jp: "レポート", romaji: "repooto"},
-                    {en: "Education", jp: "教育", romaji: "kyouiku"},
-                    {en: "Competition", jp: "競争", romaji: "kyousou"},
-                    {en: "Custom/habit", jp: "習慣", romaji: "shuukan"},
-                    {en: "Government", jp: "政府", romaji: "seifu"},
-                    {en: "Detailed/fine", jp: "細かい", romaji: "komakai"},
-                    {en: "Firmly/steadily", jp: "しっかり", romaji: "shikkari"},
-                    {en: "Completely", jp: "すっかり", romaji: "sukkari"},
-                    {en: "to wrap", jp: "包む", romaji: "tsutsumu"},
-                    {en: "to visit", jp: "訪ねる", romaji: "tazuneru"},
-                    {en: "to praise", jp: "褒める", romaji: "homeru"},
-                    {en: "to utilize", jp: "利用する", romaji: "riyou suru"},
-                    {en: "Grandfather/Grandmother", jp: "祖父/祖母", romaji: "sofu/sobo"},
-                    {en: "Uncle/Aunt", jp: "おじ/おば", romaji: "oji/oba"},
-                    {en: "Baby", jp: "赤ちゃん", romaji: "akachan"},
-                    {en: "Foreign student", jp: "留学生", romaji: "ryuugakusei"},
-                    {en: "Scenery", jp: "景色", romaji: "keshiki"},
-                    {en: "Smell/fragrance", jp: "匂い", romaji: "nioi"},
-                    {en: "Technology/skill", jp: "技術", romaji: "gijutsu"},
-                    {en: "Splendid/magnificent", jp: "立派", romaji: "rippa"},
-                    {en: "Or/otherwise", jp: "または", romaji: "mataha"},
-                    {en: "After that", jp: "それから", romaji: "sorekara"},
-                    {en: "Secret", jp: "秘密", romaji: "himitsu"},
-                    {en: "Strange/odd", jp: "変", romaji: "hen"}
+                    {en: "to give (to me)", jp: "くれる", romaji: "kureru"}, {en: "to give (humble)", jp: "下さる", romaji: "kudasaru"}, {en: "to give (respectful)", jp: "差し上げる", romaji: "sashiageru"}, {en: "to receive (humble)", jp: "いただく", romaji: "itadaku"}, {en: "to do (humble)", jp: "致す", romaji: "itasu"}, {en: "to do (respectful)", jp: "なさる", romaji: "nasaru"}, {en: "to say (humble)", jp: "申す", romaji: "mousu"}, {en: "to be/go/come (respectful)", jp: "いらっしゃる", romaji: "irassharu"}, {en: "to eat/drink (respectful)", jp: "召し上がる", romaji: "meshiagaru"}, {en: "to see (respectful)", jp: "ご覧になる", romaji: "goran ni naru"}, {en: "to know (respectful)", jp: "ご存知", romaji: "gozonji"}, {en: "to throw", jp: "投げる", romaji: "nageru"}, {en: "to touch", jp: "触る", romaji: "sawaru"}, {en: "to gather", jp: "集まる", romaji: "atsumaru"}, {en: "to collect", jp: "集める", romaji: "atsumeru"}, {en: "Escalator/Elevator", jp: "エスカレーター/エレベーター", romaji: "esukareetaa/erebeetaa"}, {en: "Air conditioning/Heating", jp: "冷房/暖房", romaji: "reibou/danbou"}, {en: "Computer", jp: "コンピューター", romaji: "konpyuutaa"}, {en: "Report", jp: "レポート", romaji: "repooto"}, {en: "Education", jp: "教育", romaji: "kyouiku"}, {en: "Competition", jp: "競争", romaji: "kyousou"}, {en: "Custom/habit", jp: "習慣", romaji: "shuukan"}, {en: "Government", jp: "政府", romaji: "seifu"}, {en: "Detailed/fine", jp: "細かい", romaji: "komakai"}, {en: "Firmly/steadily", jp: "しっかり", romaji: "shikkari"}, {en: "Completely", jp: "すっかり", romaji: "sukkari"}, {en: "to wrap", jp: "包む", romaji: "tsutsumu"}, {en: "to visit", jp: "訪ねる", romaji: "tazuneru"}, {en: "to praise", jp: "褒める", romaji: "homeru"}, {en: "to utilize", jp: "利用する", romaji: "riyou suru"}, {en: "Grandfather/Grandmother", jp: "祖父/祖母", romaji: "sofu/sobo"}, {en: "Uncle/Aunt", jp: "おじ/おば", romaji: "oji/oba"}, {en: "Baby", jp: "赤ちゃん", romaji: "akachan"}, {en: "Foreign student", jp: "留学生", romaji: "ryuugakusei"}, {en: "Scenery", jp: "景色", romaji: "keshiki"}, {en: "Smell/fragrance", jp: "匂い", romaji: "nioi"}, {en: "Technology/skill", jp: "技術", romaji: "gijutsu"}, {en: "Splendid/magnificent", jp: "立派", romaji: "rippa"}, {en: "Or/otherwise", jp: "または", romaji: "mataha"}, {en: "After that", jp: "それから", romaji: "sorekara"}, {en: "Secret", jp: "秘密", romaji: "himitsu"}, {en: "Strange/odd", jp: "変", romaji: "hen"}
                 ]},
             },
             3: {
-                // Week 3 starts here...
                  15: { title: "より高度な行動 (Advanced Actions)", words: [
-                    {en: "to go out", jp: "出かける", romaji: "dekakeru"},
-                    {en: "to change (trains)", jp: "乗り換える", romaji: "norikaeru"},
-                    {en: "to stop (an activity)", jp: "やめる", romaji: "yameru"},
-                    {en: "to hand over", jp: "渡す", romaji: "watasu"},
-                    {en: "to investigate", jp: "調べる", romaji: "shiraberu"},
-                    {en: "to lose (a game)", jp: "負ける", romaji: "makeru"},
-                    {en: "to win", jp: "勝つ", romaji: "katsu"},
-                    {en: "to protect", jp: "守る", romaji: "mamoru"},
-                    {en: "to agree", jp: "賛成する", romaji: "sansei suru"},
-                    {en: "to oppose", jp: "反対する", romaji: "hantai suru"},
-                    {en: "Match/game", jp: "試合", romaji: "shiai"},
-                    {en: "Judo/Swimming", jp: "柔道/水泳", romaji: "juudou/suiei"},
-                    {en: "Program (TV)", jp: "番組", romaji: "bangumi"},
-                    {en: "Church", jp: "教会", romaji: "kyoukai"},
-                    {en: "Traffic", jp: "交通", romaji: "koutsuu"},
-                    {en: "Finger/Ring", jp: "指/指輪", romaji: "yubi/yubiwa"},
-                    {en: "Neck/Throat", jp: "首/喉", romaji: "kubi/nodo"},
-                    {en: "Hair/Beard", jp: "髪/髭", romaji: "kami/hige"},
-                    {en: "Sand/Stone", jp: "砂/石", romaji: "suna/ishi"},
-                    {en: "Line", jp: "線", romaji: "sen"},
-                    {en: "Center", jp: "真ん中", romaji: "mannaka"},
-                    {en: "Both sides", jp: "両方", romaji: "ryouhou"},
-                    {en: "Disappointing", jp: "残念", romaji: "zannen"},
-                    {en: "Same", jp: "同じ", romaji: "onaji"},
-                    {en: "Different", jp: "別", romaji: "betsu"},
-                    {en: "to be similar", jp: "似る", romaji: "niru"},
-                    {en: "to exchange", jp: "取り替える", romaji: "torikaeru"},
-                    {en: "to deliver", jp: "届ける", romaji: "todokeru"},
-                    {en: "to be delivered", jp: "届く", romaji: "todoku"},
-                    {en: "to pray", jp: "祈る", romaji: "inoru"},
-                    {en: "to celebrate", jp: "祝う", romaji: "iwau"},
-                    {en: "to be absent", jp: "留守にする", romaji: "rusu ni suru"},
-                    {en: "Celebration", jp: "お祝い", romaji: "oiwai"},
-                    {en: "Souvenir", jp: "お土産", romaji: "omiyage"},
-                    {en: "Mistake", jp: "間違い", romaji: "machigai"},
-                    {en: "Circumstances", jp: "都合", romaji: "tsugou"},
-                    {en: "Plan/arrangement", jp: "予定", romaji: "yotei"},
-                    {en: "Review (lesson)", jp: "復習", romaji: "fukushuu"},
-                    {en: "Japanese-style hotel", jp: "旅館", romaji: "ryokan"},
-                    {en: "Sightseeing", jp: "見物", romaji: "kenbutsu"},
-                    {en: "Relationship", jp: "関係", romaji: "kankei"},
-                    {en: "Production", jp: "生産", romaji: "seisan"},
-                    {en: "Extremely", jp: "ずいぶん", romaji: "zuibun"},
-                    {en: "Finally/at last", jp: "とうとう", romaji: "toutou"},
-                    {en: "Because of that", jp: "それで", romaji: "sorede"}
+                    {en: "to go out", jp: "出かける", romaji: "dekakeru"}, {en: "to change (trains)", jp: "乗り換える", romaji: "norikaeru"}, {en: "to stop (an activity)", jp: "やめる", romaji: "yameru"}, {en: "to hand over", jp: "渡す", romaji: "watasu"}, {en: "to investigate", jp: "調べる", romaji: "shiraberu"}, {en: "to lose (a game)", jp: "負ける", romaji: "makeru"}, {en: "to win", jp: "勝つ", romaji: "katsu"}, {en: "to protect", jp: "守る", romaji: "mamoru"}, {en: "to agree", jp: "賛成する", romaji: "sansei suru"}, {en: "to oppose", jp: "反対する", romaji: "hantai suru"}, {en: "Match/game", jp: "試合", romaji: "shiai"}, {en: "Judo/Swimming", jp: "柔道/水泳", romaji: "juudou/suiei"}, {en: "Program (TV)", jp: "番組", romaji: "bangumi"}, {en: "Church", jp: "教会", romaji: "kyoukai"}, {en: "Traffic", jp: "交通", romaji: "koutsuu"}, {en: "Finger/Ring", jp: "指/指輪", romaji: "yubi/yubiwa"}, {en: "Neck/Throat", jp: "首/喉", romaji: "kubi/nodo"}, {en: "Hair/Beard", jp: "髪/髭", romaji: "kami/hige"}, {en: "Sand/Stone", jp: "砂/石", romaji: "suna/ishi"}, {en: "Line", jp: "線", romaji: "sen"}, {en: "Center", jp: "真ん中", romaji: "mannaka"}, {en: "Both sides", jp: "両方", romaji: "ryouhou"}, {en: "Disappointing", jp: "残念", romaji: "zannen"}, {en: "Same", jp: "同じ", romaji: "onaji"}, {en: "Different", jp: "別", romaji: "betsu"}, {en: "to be similar", jp: "似る", romaji: "niru"}, {en: "to exchange", jp: "取り替える", romaji: "torikaeru"}, {en: "to deliver", jp: "届ける", romaji: "todokeru"}, {en: "to be delivered", jp: "届く", romaji: "todoku"}, {en: "to pray", jp: "祈る", romaji: "inoru"}, {en: "to celebrate", jp: "祝う", romaji: "iwau"}, {en: "to be absent", jp: "留守にする", romaji: "rusu ni suru"}, {en: "Celebration", jp: "お祝い", romaji: "oiwai"}, {en: "Souvenir", jp: "お土産", romaji: "omiyage"}, {en: "Mistake", jp: "間違い", romaji: "machigai"}, {en: "Circumstances", jp: "都合", romaji: "tsugou"}, {en: "Plan/arrangement", jp: "予定", romaji: "yotei"}, {en: "Review (lesson)", jp: "復習", romaji: "fukushuu"}, {en: "Japanese-style hotel", jp: "旅館", romaji: "ryokan"}, {en: "Sightseeing", jp: "見物", romaji: "kenbutsu"}, {en: "Relationship", jp: "関係", romaji: "kankei"}, {en: "Production", jp: "生産", romaji: "seisan"}, {en: "Extremely", jp: "ずいぶん", romaji: "zuibun"}, {en: "Finally/at last", jp: "とうとう", romaji: "toutou"}, {en: "Because of that", jp: "それで", romaji: "sorede"}
                 ]},
                  16: { title: "感情と表現 (Emotions & Expressions)", words: [
-                    {en: "to get cold", jp: "冷える", romaji: "hieru"},
-                    {en: "to cool", jp: "冷やす", romaji: "hiyasu"},
-                    {en: "to fall down", jp: "倒れる", romaji: "taoreru"},
-                    {en: "to escape", jp: "逃げる", romaji: "nigeru"},
-                    {en: "to separate", jp: "別れる", romaji: "wakareru"},
-                    {en: "to oversleep", jp: "寝坊する", romaji: "nebou suru"},
-                    {en: "to live", jp: "生きる", romaji: "ikiru"},
-                    {en: "to broadcast", jp: "放送する", romaji: "housou suru"},
-                    {en: "Western/Eastern countries", jp: "西洋/東洋", romaji: "seiyou/touyou"},
-                    {en: "Science", jp: "科学", romaji: "kagaku"},
-                    {en: "Medicine (field)", jp: "医学", romaji: "igaku"},
-                    {en: "Purpose", jp: "目的", romaji: "mokuteki"},
-                    {en: "Memory", jp: "記憶", romaji: "kioku"},
-                    {en: "Temperature", jp: "温度", romaji: "ondo"},
-                    {en: "Noisy/annoying", jp: "うるさい", romaji: "urusai"},
-                    {en: "Moreover", jp: "それに", romaji: "soreni"},
-                    {en: "Well then...", jp: "さあ", romaji: "saa"},
-                    {en: "to be transmitted", jp: "伝わる", romaji: "tsutawaru"},
-                    {en: "to convey", jp: "伝える", romaji: "tsutaeru"},
-                    {en: "to pass (time)", jp: "過ぎる", romaji: "sugiru"},
-                    {en: "to be popular", jp: "流行る", romaji: "hayaru"},
-                    {en: "to be different", jp: "違う", romaji: "chigau"},
-                    {en: "News", jp: "ニュース", romaji: "nyuusu"},
-                    {en: "Information", jp: "情報", romaji: "jouhou"},
-                    {en: "Conversation", jp: "会話", romaji: "kaiwa"},
-                    {en: "Joke", jp: "冗談", romaji: "joudan"},
-                    {en: "Rule", jp: "規則", romaji: "kisoku"},
-                    {en: "Permission", jp: "許可", romaji: "kyoka"},
-                    {en: "Result", jp: "結果", romaji: "kekka"},
-                    {en: "Effect", jp: "効果", romaji: "kouka"},
-                    {en: "Influence", jp: "影響", romaji: "eikyou"},
-                    {en: "Impression", jp: "印象", romaji: "inshou"},
-                    {en: "Effort", jp: "努力", romaji: "doryoku"},
-                    {en: "Responsibility", jp: "責任", romaji: "sekinin"},
-                    {en: "Ability", jp: "能力", romaji: "nouryoku"},
-                    {en: "Confidence", jp: "自信", romaji: "jishin"},
-                    {en: "Of course", jp: "もちろん", romaji: "mochiron"},
-                    {en: "For example", jp: "例えば", romaji: "tatoeba"},
-                    {en: "to compare", jp: "比べる", romaji: "kuraberu"},
-                    {en: "to fall/drop", jp: "落ちる", romaji: "ochiru"},
-                    {en: "to change", jp: "変わる", romaji: "kawaru"},
-                    {en: "to return", jp: "戻る", romaji: "modoru"},
-                    {en: "to help/save", jp: "助ける", romaji: "tasukeru"},
-                    {en: "Police station", jp: "警察署", romaji: "keisatsusho"},
-                    {en: "Entrance hall", jp: "玄関", romaji: "genkan"}
+                    {en: "to get cold", jp: "冷える", romaji: "hieru"}, {en: "to cool", jp: "冷やす", romaji: "hiyasu"}, {en: "to fall down", jp: "倒れる", romaji: "taoreru"}, {en: "to escape", jp: "逃げる", romaji: "nigeru"}, {en: "to separate", jp: "別れる", romaji: "wakareru"}, {en: "to oversleep", jp: "寝坊する", romaji: "nebou suru"}, {en: "to live", jp: "生きる", romaji: "ikiru"}, {en: "to broadcast", jp: "放送する", romaji: "housou suru"}, {en: "Western/Eastern countries", jp: "西洋/東洋", romaji: "seiyou/touyou"}, {en: "Science", jp: "科学", romaji: "kagaku"}, {en: "Medicine (field)", jp: "医学", romaji: "igaku"}, {en: "Purpose", jp: "目的", romaji: "mokuteki"}, {en: "Memory", jp: "記憶", romaji: "kioku"}, {en: "Temperature", jp: "温度", romaji: "ondo"}, {en: "Noisy/annoying", jp: "うるさい", romaji: "urusai"}, {en: "Moreover", jp: "それに", romaji: "soreni"}, {en: "Well then...", jp: "さあ", romaji: "saa"}, {en: "to be transmitted", jp: "伝わる", romaji: "tsutawaru"}, {en: "to convey", jp: "伝える", romaji: "tsutaeru"}, {en: "to pass (time)", jp: "過ぎる", romaji: "sugiru"}, {en: "to be popular", jp: "流行る", romaji: "hayaru"}, {en: "to be different", jp: "違う", romaji: "chigau"}, {en: "News", jp: "ニュース", romaji: "nyuusu"}, {en: "Information", jp: "情報", romaji: "jouhou"}, {en: "Conversation", jp: "会話", romaji: "kaiwa"}, {en: "Joke", jp: "冗談", romaji: "joudan"}, {en: "Rule", jp: "規則", romaji: "kisoku"}, {en: "Permission", jp: "許可", romaji: "kyoka"}, {en: "Result", jp: "結果", romaji: "kekka"}, {en: "Effect", jp: "効果", romaji: "kouka"}, {en: "Influence", jp: "影響", romaji: "eikyou"}, {en: "Impression", jp: "印象", romaji: "inshou"}, {en: "Effort", jp: "努力", romaji: "doryoku"}, {en: "Responsibility", jp: "責任", romaji: "sekinin"}, {en: "Ability", jp: "能力", romaji: "nouryoku"}, {en: "Confidence", jp: "自信", romaji: "jishin"}, {en: "Of course", jp: "もちろん", romaji: "mochiron"}, {en: "For example", jp: "例えば", romaji: "tatoeba"}, {en: "to compare", jp: "比べる", romaji: "kuraberu"}, {en: "to fall/drop", jp: "落ちる", romaji: "ochiru"}, {en: "to change", jp: "変わる", romaji: "kawaru"}, {en: "to return", jp: "戻る", romaji: "modoru"}, {en: "to help/save", jp: "助ける", romaji: "tasukeru"}, {en: "Police station", jp: "警察署", romaji: "keisatsusho"}, {en: "Entrance hall", jp: "玄関", romaji: "genkan"}
                 ]},
                 17: { title: "状態と変化 (States & Changes)", words: [
-                    {en: "to be crowded", jp: "込む", romaji: "komu"},
-                    {en: "to be empty", jp: "空く", romaji: "suku"},
-                    {en: "to break", jp: "割れる", romaji: "wareru"},
-                    {en: "to give birth", jp: "産む", romaji: "umu"},
-                    {en: "to meet (an accident)", jp: "遭う", romaji: "au"},
-                    {en: "Traffic accident", jp: "交通事故", romaji: "koutsuu jiko"},
-                    {en: "Condition/state", jp: "状態", romaji: "joutai"},
-                    {en: "Condition/health", jp: "具合", romaji: "guai"},
-                    {en: "Atmosphere", jp: "雰囲気", romaji: "fun'iki"},
-                    {en: "Tradition", jp: "伝統", romaji: "dentou"},
-                    {en: "Goal", jp: "目的", romaji: "mokuteki"},
-                    {en: "Important", jp: "重要", romaji: "juuyou"},
-                    {en: "By all means", jp: "ぜひ", romaji: "zehi"},
-                    {en: "to be connected", jp: "つながる", romaji: "tsunagaru"},
-                    {en: "to connect", jp: "つなぐ", romaji: "tsunagu"},
-                    {en: "to advance", jp: "進む", romaji: "susumu"},
-                    {en: "Human being", jp: "人間", romaji: "ningen"},
-                    {en: "Male/Female", jp: "男性/女性", romaji: "dansei/josei"},
-                    {en: "Individual", jp: "個人", romaji: "kojin"},
-                    {en: "Group/Team", jp: "グループ/チーム", romaji: "guruupu/chiimu"},
-                    {en: "Role", jp: "役割", romaji: "yakuwari"},
-                    {en: "Position/standpoint", jp: "立場", romaji: "tachiba"},
-                    {en: "Action/behavior", jp: "行動", romaji: "koudou"},
-                    {en: "Attitude", jp: "態度", romaji: "taido"},
-                    {en: "Common sense", jp: "常識", romaji: "joushiki"},
-                    {en: "Right/privilege", jp: "権利", romaji: "kenri"},
-                    {en: "Duty/obligation", jp: "義務", romaji: "gimu"},
-                    {en: "Ideal", jp: "理想的", romaji: "risouteki"},
-                    {en: "Positive", jp: "積極的", romaji: "sekkyokuteki"},
-                    {en: "Negative", jp: "消極的", romaji: "shoukyokuteki"},
-                    {en: "Specifically", jp: "具体的に", romaji: "gutaiteki ni"},
-                    {en: "to produce", jp: "生む", romaji: "umu"},
-                    {en: "to develop", jp: "育つ", romaji: "sodatsu"},
-                    {en: "to build", jp: "建てる", romaji: "tateru"},
-                    {en: "to destroy", jp: "壊す", romaji: "kowasu"},
-                    {en: "Environment", jp: "環境", romaji: "kankyou"},
-                    {en: "Earth/globe", jp: "地球", romaji: "chikyuu"},
-                    {en: "Universe/space", jp: "宇宙", romaji: "uchuu"},
-                    {en: "Animal/Plant", jp: "動物/植物", romaji: "doubutsu/shokubutsu"},
-                    {en: "Energy", jp: "エネルギー", romaji: "enerugii"},
-                    {en: "Resource", jp: "資源", romaji: "shigen"},
-                    {en: "Pollution", jp: "公害", romaji: "kougai"},
-                    {en: "Garbage", jp: "ごみ", romaji: "gomi"},
-                    {en: "Recycling", jp: "リサイクル", romaji: "risaikuru"},
-                    {en: "Rich/abundant", jp: "豊か", romaji: "yutaka"}
+                    {en: "to be crowded", jp: "込む", romaji: "komu"}, {en: "to be empty", jp: "空く", romaji: "suku"}, {en: "to break", jp: "割れる", romaji: "wareru"}, {en: "to give birth", jp: "産む", romaji: "umu"}, {en: "to meet (an accident)", jp: "遭う", romaji: "au"}, {en: "Traffic accident", jp: "交通事故", romaji: "koutsuu jiko"}, {en: "Condition/state", jp: "状態", romaji: "joutai"}, {en: "Condition/health", jp: "具合", romaji: "guai"}, {en: "Atmosphere", jp: "雰囲気", romaji: "fun'iki"}, {en: "Tradition", jp: "伝統", romaji: "dentou"}, {en: "Goal", jp: "目的", romaji: "mokuteki"}, {en: "Important", jp: "重要", romaji: "juuyou"}, {en: "By all means", jp: "ぜひ", romaji: "zehi"}, {en: "to be connected", jp: "つながる", romaji: "tsunagaru"}, {en: "to connect", jp: "つなぐ", romaji: "tsunagu"}, {en: "to advance", jp: "進む", romaji: "susumu"}, {en: "Human being", jp: "人間", romaji: "ningen"}, {en: "Male/Female", jp: "男性/女性", romaji: "dansei/josei"}, {en: "Individual", jp: "個人", romaji: "kojin"}, {en: "Group/Team", jp: "グループ/チーム", romaji: "guruupu/chiimu"}, {en: "Role", jp: "役割", romaji: "yakuwari"}, {en: "Position/standpoint", jp: "立場", romaji: "tachiba"}, {en: "Action/behavior", jp: "行動", romaji: "koudou"}, {en: "Attitude", jp: "態度", romaji: "taido"}, {en: "Common sense", jp: "常識", romaji: "joushiki"}, {en: "Right/privilege", jp: "権利", romaji: "kenri"}, {en: "Duty/obligation", jp: "義務", romaji: "gimu"}, {en: "Ideal", jp: "理想的", romaji: "risouteki"}, {en: "Positive", jp: "積極的", romaji: "sekkyokuteki"}, {en: "Negative", jp: "消極的", romaji: "shoukyokuteki"}, {en: "Specifically", jp: "具体的に", romaji: "gutaiteki ni"}, {en: "to produce", jp: "生む", romaji: "umu"}, {en: "to develop", jp: "育つ", romaji: "sodatsu"}, {en: "to build", jp: "建てる", romaji: "tateru"}, {en: "to destroy", jp: "壊す", romaji: "kowasu"}, {en: "Environment", jp: "環境", romaji: "kankyou"}, {en: "Earth/globe", jp: "地球", romaji: "chikyuu"}, {en: "Universe/space", jp: "宇宙", romaji: "uchuu"}, {en: "Animal/Plant", jp: "動物/植物", romaji: "doubutsu/shokubutsu"}, {en: "Energy", jp: "エネルギー", romaji: "enerugii"}, {en: "Resource", jp: "資源", romaji: "shigen"}, {en: "Pollution", jp: "公害", romaji: "kougai"}, {en: "Garbage", jp: "ごみ", romaji: "gomi"}, {en: "Recycling", jp: "リサイクル", romaji: "risaikuru"}, {en: "Rich/abundant", jp: "豊か", romaji: "yutaka"}
                 ]},
                 18: { title: "科学と技術 (Science & Technology)", words: [
-                    {en: "to appear", jp: "現れる", romaji: "arawareru"},
-                    {en: "to disappear", jp: "消える", romaji: "kieru"},
-                    {en: "to remain", jp: "残る", romaji: "nokoru"},
-                    {en: "to lack", jp: "足りない", romaji: "tarinai"},
-                    {en: "to exceed", jp: "超える", romaji: "koeru"},
-                    {en: "to pass (exam)", jp: "合格する", romaji: "goukaku suru"},
-                    {en: "to succeed", jp: "成功する", romaji: "seikou suru"},
-                    {en: "Development", jp: "発展", romaji: "hatten"},
-                    {en: "Progress", jp: "進歩", romaji: "shinpo"},
-                    {en: "Change", jp: "変化", romaji: "henka"},
-                    {en: "Research", jp: "研究", romaji: "kenkyuu"},
-                    {en: "Discovery", jp: "発見", romaji: "hakken"},
-                    {en: "Invention", jp: "発明", romaji: "hatsumei"},
-                    {en: "Machine", jp: "機械", romaji: "kikai"},
-                    {en: "Material", jp: "材料", romaji: "zairyou"},
-                    {en: "Product", jp: "製品", romaji: "seihin"},
-                    {en: "Quality", jp: "品質", romaji: "hinshitsu"},
-                    {en: "Design", jp: "デザイン", romaji: "dezain"},
-                    {en: "Function", jp: "機能", romaji: "kinou"},
-                    {en: "Operation", jp: "操作", romaji: "sousa"},
-                    {en: "System", jp: "システム", romaji: "shisutemu"},
-                    {en: "Automatic", jp: "自動", romaji: "jidou"},
-                    {en: "Rapidly", jp: "急速に", romaji: "kyuusoku ni"},
-                    {en: "In place of", jp: "代わりに", romaji: "kawari ni"},
-                    {en: "to feel", jp: "感じる", romaji: "kanjiru"},
-                    {en: "to doubt", jp: "疑う", romaji: "utagau"},
-                    {en: "to expect", jp: "期待する", romaji: "kitai suru"},
-                    {en: "to be disappointed", jp: "がっかりする", romaji: "gakkari suru"},
-                    {en: "to be relieved", jp: "安心する", romaji: "anshin suru"},
-                    {en: "to be satisfied", jp: "満足する", romaji: "manzoku suru"},
-                    {en: "to be troubled", jp: "悩む", romaji: "nayamu"},
-                    {en: "to be moved", jp: "感動する", romaji: "kandou suru"},
-                    {en: "to express", jp: "表現する", romaji: "hyougen suru"},
-                    {en: "Emotion", jp: "感情", romaji: "kanjou"},
-                    {en: "Joy", jp: "喜び", romaji: "yorokobi"},
-                    {en: "Anger", jp: "怒り", romaji: "ikari"},
-                    {en: "Sadness", jp: "悲しみ", romaji: "kanashimi"},
-                    {en: "Surprise", jp: "驚き", romaji: "odoroki"},
-                    {en: "Fear", jp: "恐怖", romaji: "kyoufu"},
-                    {en: "Anxiety", jp: "不安", romaji: "fuan"},
-                    {en: "Hope", jp: "希望", romaji: "kibou"},
-                    {en: "Love", jp: "愛", romaji: "ai"},
-                    {en: "Friendship", jp: "友情", romaji: "yuujou"},
-                    {en: "Trust", jp: "信頼", romaji: "shinrai"},
-                    {en: "Courage", jp: "勇気", romaji: "yuuki"}
+                    {en: "to appear", jp: "現れる", romaji: "arawareru"}, {en: "to disappear", jp: "消える", romaji: "kieru"}, {en: "to remain", jp: "残る", romaji: "nokoru"}, {en: "to lack", jp: "足りない", romaji: "tarinai"}, {en: "to exceed", jp: "超える", romaji: "koeru"}, {en: "to pass (exam)", jp: "合格する", romaji: "goukaku suru"}, {en: "to succeed", jp: "成功する", romaji: "seikou suru"}, {en: "Development", jp: "発展", romaji: "hatten"}, {en: "Progress", jp: "進歩", romaji: "shinpo"}, {en: "Change", jp: "変化", romaji: "henka"}, {en: "Research", jp: "研究", romaji: "kenkyuu"}, {en: "Discovery", jp: "発見", romaji: "hakken"}, {en: "Invention", jp: "発明", romaji: "hatsumei"}, {en: "Machine", jp: "機械", romaji: "kikai"}, {en: "Material", jp: "材料", romaji: "zairyou"}, {en: "Product", jp: "製品", romaji: "seihin"}, {en: "Quality", jp: "品質", romaji: "hinshitsu"}, {en: "Design", jp: "デザイン", romaji: "dezain"}, {en: "Function", jp: "機能", romaji: "kinou"}, {en: "Operation", jp: "操作", romaji: "sousa"}, {en: "System", jp: "システム", romaji: "shisutemu"}, {en: "Automatic", jp: "自動", romaji: "jidou"}, {en: "Rapidly", jp: "急速に", romaji: "kyuusoku ni"}, {en: "In place of", jp: "代わりに", romaji: "kawari ni"}, {en: "to feel", jp: "感じる", romaji: "kanjiru"}, {en: "to doubt", jp: "疑う", romaji: "utagau"}, {en: "to expect", jp: "期待する", romaji: "kitai suru"}, {en: "to be disappointed", jp: "がっかりする", romaji: "gakkari suru"}, {en: "to be relieved", jp: "安心する", romaji: "anshin suru"}, {en: "to be satisfied", jp: "満足する", romaji: "manzoku suru"}, {en: "to be troubled", jp: "悩む", romaji: "nayamu"}, {en: "to be moved", jp: "感動する", romaji: "kandou suru"}, {en: "to express", jp: "表現する", romaji: "hyougen suru"}, {en: "Emotion", jp: "感情", romaji: "kanjou"}, {en: "Joy", jp: "喜び", romaji: "yorokobi"}, {en: "Anger", jp: "怒り", romaji: "ikari"}, {en: "Sadness", jp: "悲しみ", romaji: "kanashimi"}, {en: "Surprise", jp: "驚き", romaji: "odoroki"}, {en: "Fear", jp: "恐怖", romaji: "kyoufu"}, {en: "Anxiety", jp: "不安", romaji: "fuan"}, {en: "Hope", jp: "希望", romaji: "kibou"}, {en: "Love", jp: "愛", romaji: "ai"}, {en: "Friendship", jp: "友情", romaji: "yuujou"}, {en: "Trust", jp: "信頼", romaji: "shinrai"}, {en: "Courage", jp: "勇気", romaji: "yuuki"}
                 ]},
                 19: { title: "抽象的な概念 (Abstract Concepts)", words: [
-                    {en: "Patience", jp: "我慢", romaji: "gaman"},
-                    {en: "Happy/fortunate", jp: "幸せ", romaji: "shiawase"},
-                    {en: "Unfortunate", jp: "不幸", romaji: "fukou"},
-                    {en: "Regarding", jp: "～について", romaji: "~ni tsuite"},
-                    {en: "According to", jp: "～によると", romaji: "~ni yoru to"},
-                    {en: "to refuse", jp: "断る", romaji: "kotowaru"},
-                    {en: "to accept", jp: "受け取る", romaji: "uketoru"},
-                    {en: "to cancel", jp: "キャンセルする", romaji: "kyanseru suru"},
-                    {en: "to confirm", jp: "確認する", romaji: "kakunin suru"},
-                    {en: "to explain", jp: "説明する", romaji: "setsumei suru"},
-                    {en: "to understand", jp: "理解する", romaji: "rikai suru"},
-                    {en: "to misunderstand", jp: "誤解する", romaji: "gokai suru"},
-                    {en: "to forgive", jp: "許す", romaji: "yurusu"},
-                    {en: "Part/section", jp: "部分", romaji: "bubun"},
-                    {en: "Center", jp: "中央", romaji: "chuuou"},
-                    {en: "Surface", jp: "表面", romaji: "hyoumen"},
-                    {en: "Beginning/first", jp: "最初", romaji: "saisho"},
-                    {en: "End/last", jp: "最後", romaji: "saigo"},
-                    {en: "During/on the way", jp: "途中", romaji: "tochuu"},
-                    {en: "The whole/entire", jp: "全体", romaji: "zentai"},
-                    {en: "Difference", jp: "違い", romaji: "chigai"},
-                    {en: "Common point", jp: "共通点", romaji: "kyouutsuuten"},
-                    {en: "Characteristic", jp: "特徴", romaji: "tokuchou"},
-                    {en: "Advantage", jp: "長所", romaji: "chousho"},
-                    {en: "Disadvantage", jp: "短所", romaji: "tansho"},
-                    {en: "Conclusion", jp: "結論", romaji: "ketsuron"},
-                    {en: "Cause", jp: "原因", romaji: "gen'in"},
-                    {en: "Result", jp: "結果", romaji: "kekka"},
-                    {en: "General", jp: "一般的", romaji: "ippanteki"},
-                    {en: "to increase", jp: "増える", romaji: "fueru"},
-                    {en: "to decrease", jp: "減る", romaji: "heru"},
-                    {en: "to get wet", jp: "濡れる", romaji: "nureru"},
-                    {en: "to be pleased", jp: "喜ぶ", romaji: "yorokobu"},
-                    {en: "to consult", jp: "相談する", romaji: "soudan suru"},
-                    {en: "to pass (exam)", jp: "合格する", romaji: "goukaku suru"},
-                    {en: "to fail (exam)", jp: "不合格になる", romaji: "fugoukaku ni naru"},
-                    {en: "Feeling/mood", jp: "気分", romaji: "kibun"},
-                    {en: "Tool", jp: "道具", romaji: "dougu"},
-                    {en: "Branch", jp: "枝", romaji: "eda"},
-                    {en: "Leaf", jp: "葉", romaji: "ha"},
-                    {en: "Fire", jp: "火", romaji: "hi"}
+                    {en: "Patience", jp: "我慢", romaji: "gaman"}, {en: "Happy/fortunate", jp: "幸せ", romaji: "shiawase"}, {en: "Unfortunate", jp: "不幸", romaji: "fukou"}, {en: "Regarding", jp: "～について", romaji: "~ni tsuite"}, {en: "According to", jp: "～によると", romaji: "~ni yoru to"}, {en: "to refuse", jp: "断る", romaji: "kotowaru"}, {en: "to accept", jp: "受け取る", romaji: "uketoru"}, {en: "to cancel", jp: "キャンセルする", romaji: "kyanseru suru"}, {en: "to confirm", jp: "確認する", romaji: "kakunin suru"}, {en: "to explain", jp: "説明する", romaji: "setsumei suru"}, {en: "to understand", jp: "理解する", romaji: "rikai suru"}, {en: "to misunderstand", jp: "誤解する", romaji: "gokai suru"}, {en: "to forgive", jp: "許す", romaji: "yurusu"}, {en: "Part/section", jp: "部分", romaji: "bubun"}, {en: "Center", jp: "中央", romaji: "chuuou"}, {en: "Surface", jp: "表面", romaji: "hyoumen"}, {en: "Beginning/first", jp: "最初", romaji: "saisho"}, {en: "End/last", jp: "最後", romaji: "saigo"}, {en: "During/on the way", jp: "途中", romaji: "tochuu"}, {en: "The whole/entire", jp: "全体", romaji: "zentai"}, {en: "Difference", jp: "違い", romaji: "chigai"}, {en: "Common point", jp: "共通点", romaji: "kyouutsuuten"}, {en: "Characteristic", jp: "特徴", romaji: "tokuchou"}, {en: "Advantage", jp: "長所", romaji: "chousho"}, {en: "Disadvantage", jp: "短所", romaji: "tansho"}, {en: "Conclusion", jp: "結論", romaji: "ketsuron"}, {en: "Cause", jp: "原因", romaji: "gen'in"}, {en: "Result", jp: "結果", romaji: "kekka"}, {en: "General", jp: "一般的", romaji: "ippanteki"}, {en: "to increase", jp: "増える", romaji: "fueru"}, {en: "to decrease", jp: "減る", romaji: "heru"}, {en: "to get wet", jp: "濡れる", romaji: "nureru"}, {en: "to be pleased", jp: "喜ぶ", romaji: "yorokobu"}, {en: "to consult", jp: "相談する", romaji: "soudan suru"}, {en: "to pass (exam)", jp: "合格する", romaji: "goukaku suru"}, {en: "to fail (exam)", jp: "不合格になる", romaji: "fugoukaku ni naru"}, {en: "Feeling/mood", jp: "気分", romaji: "kibun"}, {en: "Tool", jp: "道具", romaji: "dougu"}, {en: "Branch", jp: "枝", romaji: "eda"}, {en: "Leaf", jp: "葉", romaji: "ha"}, {en: "Fire", jp: "火", romaji: "hi"}
                 ]},
                 20: { title: "ビジネスと経済 (Business & Economy)", words: [
-                    {en: "Customer", jp: "客", romaji: "kyaku"},
-                    {en: "Trade", jp: "貿易", romaji: "boueki"},
-                    {en: "Export", jp: "輸出", romaji: "yushutsu"},
-                    {en: "Import", jp: "輸入", romaji: "yunyuu"},
-                    {en: "Industry", jp: "産業", romaji: "sangyou"},
-                    {en: "Agriculture", jp: "農業", romaji: "nougyou"},
-                    {en: "Factory", jp: "工場", romaji: "koujou"},
-                    {en: "Price (of goods)", jp: "物価", romaji: "bukka"},
-                    {en: "Tax", jp: "税金", romaji: "zeikin"},
-                    {en: "Profit", jp: "利益", romaji: "rieki"},
-                    {en: "Loss (financial)", jp: "損", romaji: "son"},
-                    {en: "Advertisement", jp: "広告", romaji: "koukoku"},
-                    {en: "Contract", jp: "契約", romaji: "keiyaku"},
-                    {en: "Salary", jp: "給料", romaji: "kyuuryou"},
-                    {en: "Bonus", jp: "ボーナス", romaji: "boonasu"},
-                    {en: "Interview", jp: "面接", romaji: "mensetsu"},
-                    {en: "Resume", jp: "履歴書", romaji: "rirekisho"},
-      
-                    {en: "to be sold out", jp: "売り切れる", romaji: "urikireru"},
-                    {en: "to save money", jp: "貯金する", romaji: "chokin suru"},
-                    {en: "to invest", jp: "投資する", romaji: "toushi suru"},
-                    {en: "to negotiate", jp: "交渉する", romaji: "koushou suru"},
-                    {en: "to manage", jp: "経営する", romaji: "keiei suru"},
-                    {en: "to go bankrupt", jp: "倒産する", romaji: "tousan suru"},
-                    {en: "to retire", jp: "退職する", romaji: "taishoku suru"},
-                    {en: "to get promoted", jp: "昇進する", romaji: "shoushin suru"},
-                    {en: "Hardworking", jp: "勤勉", romaji: "kinben"},
-                    {en: "Serious (attitude)", jp: "真剣", romaji: "shinken"},
-                    {en: "Careful/prudent", jp: "慎重", romaji: "shinchou"},
-                    {en: "Official", jp: "公式", romaji: "koushiki"},
-                    {en: "Private", jp: "私的", romaji: "shiteki"},
-                    {en: "Demand", jp: "需要", romaji: "juyou"},
-                    {en: "Supply", jp: "供給", romaji: "kyoukyuu"},
-                    {en: "Consumer", jp: "消費者", romaji: "shouhisha"},
-                    {en: "Producer", jp: "生産者", romaji: "seisansha"},
-                    {en: "Market", jp: "市場", romaji: "shijou"},
-                    {en: "Capital", jp: "資本", romaji: "shihon"},
-                    {en: "Stock/share", jp: "株", romaji: "kabu"},
-                    {en: "Real estate", jp: "不動産", romaji: "fudousan"},
-                    {en: "Insurance", jp: "保険", romaji: "hoken"}
+                    {en: "Customer", jp: "客", romaji: "kyaku"}, {en: "Trade", jp: "貿易", romaji: "boueki"}, {en: "Export", jp: "輸出", romaji: "yushutsu"}, {en: "Import", jp: "輸入", romaji: "yunyuu"}, {en: "Industry", jp: "産業", romaji: "sangyou"}, {en: "Agriculture", jp: "農業", romaji: "nougyou"}, {en: "Factory", jp: "工場", romaji: "koujou"}, {en: "Price (of goods)", jp: "物価", romaji: "bukka"}, {en: "Tax", jp: "税金", romaji: "zeikin"}, {en: "Profit", jp: "利益", romaji: "rieki"}, {en: "Loss (financial)", jp: "損", romaji: "son"}, {en: "Advertisement", jp: "広告", romaji: "koukoku"}, {en: "Contract", jp: "契約", romaji: "keiyaku"}, {en: "Salary", jp: "給料", romaji: "kyuuryou"}, {en: "Bonus", jp: "ボーナス", romaji: "boonasu"}, {en: "Interview", jp: "面接", romaji: "mensetsu"}, {en: "Resume", jp: "履歴書", romaji: "rirekisho"}, {en: "to be sold out", jp: "売り切れる", romaji: "urikireru"}, {en: "to save money", jp: "貯金する", romaji: "chokin suru"}, {en: "to invest", jp: "投資する", romaji: "toushi suru"}, {en: "to negotiate", jp: "交渉する", romaji: "koushou suru"}, {en: "to manage", jp: "経営する", romaji: "keiei suru"}, {en: "to go bankrupt", jp: "倒産する", romaji: "tousan suru"}, {en: "to retire", jp: "退職する", romaji: "taishoku suru"}, {en: "to get promoted", jp: "昇進する", romaji: "shoushin suru"}, {en: "Hardworking", jp: "勤勉", romaji: "kinben"}, {en: "Serious (attitude)", jp: "真剣", romaji: "shinken"}, {en: "Careful/prudent", jp: "慎重", romaji: "shinchou"}, {en: "Official", jp: "公式", romaji: "koushiki"}, {en: "Private", jp: "私的", romaji: "shiteki"}, {en: "Demand", jp: "需要", romaji: "juyou"}, {en: "Supply", jp: "供給", romaji: "kyoukyuu"}, {en: "Consumer", jp: "消費者", romaji: "shouhisha"}, {en: "Producer", jp: "生産者", romaji: "seisansha"}, {en: "Market", jp: "市場", romaji: "shijou"}, {en: "Capital", jp: "資本", romaji: "shihon"}, {en: "Stock/share", jp: "株", romaji: "kabu"}, {en: "Real estate", jp: "不動産", romaji: "fudousan"}, {en: "Insurance", jp: "保険", romaji: "hoken"}
                 ]},
                 21: { title: "最終復習 (Final Review)", words: [
-                    {en: "to be absent", jp: "欠席する", romaji: "kesseki suru"},
-                    {en: "to be surprised", jp: "驚く", romaji: "odoroku"},
-                    {en: "to be worried", jp: "悩む", romaji: "nayamu"},
-                    {en: "to notice", jp: "気づく", romaji: "kizuku"},
-                    {en: "to reflect", jp: "反省する", romaji: "hansei suru"},
-                    {en: "to get excited", jp: "興奮する", romaji: "koufun suru"},
-                    {en: "to calm down", jp: "落ち着く", romaji: "ochitsuku"},
-                    {en: "to concentrate", jp: "集中する", romaji: "shuuchuu suru"},
-                    {en: "to memorize", jp: "暗記する", romaji: "anki suru"},
-                    {en: "to judge", jp: "判断する", romaji: "handan suru"},
-                    {en: "to criticize", jp: "批判する", romaji: "hihan suru"},
-                    {en: "to permit/allow", jp: "許す", romaji: "yurusu"},
-                    {en: "to depend on", jp: "頼る", romaji: "tayoru"},
-                    {en: "to be related", jp: "関係がある", romaji: "kankei ga aru"},
-                    {en: "to get used to", jp: "慣れる", romaji: "nareru"},
-                    {en: "to be different from", jp: "と違う", romaji: "to chigau"},
-                    {en: "to be similar to", jp: "と似ている", romaji: "to niteiru"},
-                    {en: "to be full of", jp: "でいっぱい", romaji: "de ippai"},
-                    {en: "to be covered with", jp: "だらけ", romaji: "darake"},
-                    {en: "Anyway", jp: "とにかく", romaji: "tonikaku"},
-                    {en: "By the way", jp: "ところで", romaji: "tokorode"},
-                    {en: "In that case", jp: "その場合", romaji: "sono baai"},
-                    {en: "On the contrary", jp: "逆に", romaji: "gyaku ni"},
-                    {en: "As expected", jp: "やはり/やっぱり", romaji: "yahari/yappari"},
-                    {en: "Somehow", jp: "何となく", romaji: "nantonaku"},
-                    {en: "I see", jp: "なるほど", romaji: "naruhodo"},
-                    {en: "You're welcome", jp: "どういたしまして", romaji: "dou itashimashite"},
-                    {en: "Long time no see", jp: "お久しぶりです", romaji: "ohisashiburi desu"},
-                    {en: "Take care", jp: "お大事に", romaji: "odaiji ni"},
-                    {en: "Cheers!", jp: "乾杯！", romaji: "kanpai!"},
-                    {en: "Congratulations!", jp: "おめでとうございます", romaji: "omedetou gozaimasu"},
-                    {en: "Good luck!", jp: "頑張ってください", romaji: "ganbatte kudasai"},
-                    {en: "I'm home", jp: "ただいま", romaji: "tadaima"},
-                    {en: "Welcome home", jp: "おかえりなさい", romaji: "okaerinasai"},
-                    {en: "Thank you for your hard work", jp: "お疲れ様です", romaji: "otsukaresama desu"},
-                    {en: "Excuse me (for bothering you)", jp: "お邪魔します", romaji: "ojama shimasu"},
-                    {en: "This is a small gift", jp: "つまらないものですが", romaji: "tsumaranai mono desu ga"},
-                    {en: "Please go ahead", jp: "どうぞお先に", romaji: "douzo osaki ni"},
-                    {en: "After you", jp: "お先にどうぞ", romaji: "osaki ni douzo"},
-                    {en: "It can't be helped", jp: "仕方がない", romaji: "shikata ga nai"}
+                    {en: "to be absent", jp: "欠席する", romaji: "kesseki suru"}, {en: "to be surprised", jp: "驚く", romaji: "odoroku"}, {en: "to be worried", jp: "悩む", romaji: "nayamu"}, {en: "to notice", jp: "気づく", romaji: "kizuku"}, {en: "to reflect", jp: "反省する", romaji: "hansei suru"}, {en: "to get excited", jp: "興奮する", romaji: "koufun suru"}, {en: "to calm down", jp: "落ち着く", romaji: "ochitsuku"}, {en: "to concentrate", jp: "集中する", romaji: "shuuchuu suru"}, {en: "to memorize", jp: "暗記する", romaji: "anki suru"}, {en: "to judge", jp: "判断する", romaji: "handan suru"}, {en: "to criticize", jp: "批判する", romaji: "hihan suru"}, {en: "to permit/allow", jp: "許す", romaji: "yurusu"}, {en: "to depend on", jp: "頼る", romaji: "tayoru"}, {en: "to be related", jp: "関係がある", romaji: "kankei ga aru"}, {en: "to get used to", jp: "慣れる", romaji: "nareru"}, {en: "to be different from", jp: "と違う", romaji: "to chigau"}, {en: "to be similar to", jp: "と似ている", romaji: "to niteiru"}, {en: "to be full of", jp: "でいっぱい", romaji: "de ippai"}, {en: "to be covered with", jp: "だらけ", romaji: "darake"}, {en: "Anyway", jp: "とにかく", romaji: "tonikaku"}, {en: "By the way", jp: "ところで", romaji: "tokorode"}, {en: "In that case", jp: "その場合", romaji: "sono baai"}, {en: "On the contrary", jp: "逆に", romaji: "gyaku ni"}, {en: "As expected", jp: "やはり/やっぱり", romaji: "yahari/yappari"}, {en: "Somehow", jp: "何となく", romaji: "nantonaku"}, {en: "I see", jp: "なるほど", romaji: "naruhodo"}, {en: "You're welcome", jp: "どういたしまして", romaji: "dou itashimashite"}, {en: "Long time no see", jp: "お久しぶりです", romaji: "ohisashiburi desu"}, {en: "Take care", jp: "お大事に", romaji: "odaiji ni"}, {en: "Cheers!", jp: "乾杯！", romaji: "kanpai!"}, {en: "Congratulations!", jp: "おめでとうございます", romaji: "omedetou gozaimasu"}, {en: "Good luck!", jp: "頑張ってください", romaji: "ganbatte kudasai"}, {en: "I'm home", jp: "ただいま", romaji: "tadaima"}, {en: "Welcome home", jp: "おかえりなさい", romaji: "okaerinasai"}, {en: "Thank you for your hard work", jp: "お疲れ様です", romaji: "otsukaresama desu"}, {en: "Excuse me (for bothering you)", jp: "お邪魔します", romaji: "ojama shimasu"}, {en: "This is a small gift", jp: "つまらないものですが", romaji: "tsumaranai mono desu ga"}, {en: "Please go ahead", jp: "どうぞお先に", romaji: "douzo osaki ni"}, {en: "After you", jp: "お先にどうぞ", romaji: "osaki ni douzo"}, {en: "It can't be helped", jp: "仕方がない", romaji: "shikata ga nai"}
                 ]},
             },
+            4: {
+                22: { title: "社会問題 (Social Issues)", words: [
+                    {en: "Aging society", jp: "高齢化社会", romaji: "koureika shakai"}, {en: "Declining birthrate", jp: "少子化", romaji: "shoushika"}, {en: "Unemployment", jp: "失業", romaji: "shitsugyou"}, {en: "Poverty", jp: "貧困", romaji: "hinkon"}, {en: "Discrimination", jp: "差別", romaji: "sabetsu"}, {en: "Bullying", jp: "いじめ", romaji: "ijime"}, {en: "Domestic violence", jp: "家庭内暴力", romaji: "kateinai bouryoku"}, {en: "Crime", jp: "犯罪", romaji: "hanzai"}, {en: "Disaster", jp: "災害", romaji: "saigai"}, {en: "Refugee", jp: "難民", romaji: "nanmin"}, {en: "Volunteer", jp: "ボランティア", romaji: "borantia"}, {en: "Donation", jp: "寄付", romaji: "kifu"}, {en: "to solve", jp: "解決する", romaji: "kaiketsu suru"}, {en: "to cooperate", jp: "協力する", romaji: "kyouryoku suru"}, {en: "to support", jp: "支援する", romaji: "shien suru"}, {en: "to participate", jp: "参加する", romaji: "sanka suru"}, {en: "to discuss", jp: "議論する", romaji: "giron suru"}, {en: "to propose", jp: "提案する", romaji: "teian suru"}, {en: "to demand", jp: "要求する", romaji: "youkyuu suru"}, {en: "to protest", jp: "抗議する", romaji: "kougi suru"}, {en: "Social", jp: "社会的", romaji: "shakaiteki"}, {en: "Public", jp: "公的", romaji: "kouteki"}, {en: "Serious (problem)", jp: "深刻", romaji: "shinkoku"}, {en: "Global", jp: "地球規模の", romaji: "chikyuukibo no"}
+                ]},
+                23: { title: "感情のニュアンス (Nuanced Emotions)", words: [
+                    {en: "to be moved/touched", jp: "感動する", romaji: "kandou suru"}, {en: "to be impressed", jp: "感心する", romaji: "kanshin suru"}, {en: "to be envious", jp: "うらやましい", romaji: "urayamashii"}, {en: "to feel nostalgic", jp: "懐かしい", romaji: "natsukashii"}, {en: "to feel refreshed", jp: "すっきりする", romaji: "sukkiri suru"}, {en: "to be irritated", jp: "いらいらする", romaji: "iraira suru"}, {en: "to feel down", jp: "落ち込む", romaji: "ochikomu"}, {en: "to hesitate", jp: "ためらう", romaji: "tamerau"}, {en: "to regret", jp: "後悔する", romaji: "koukai suru"}, {en: "to be grateful", jp: "感謝する", romaji: "kansha suru"}, {en: "to yearn for", jp: "憧れる", romaji: "akogareru"}, {en: "to be fed up", jp: "あきれる", romaji: "akireru"}, {en: "to be absorbed in", jp: "夢中になる", romaji: "muchuu ni naru"}, {en: "to be nervous", jp: "緊張する", romaji: "kinchou suru"}, {en: "to relax", jp: "リラックスする", romaji: "rirakkusu suru"}, {en: "Calm", jp: "穏やか", romaji: "odayaka"}, {en: "Cheerful", jp: "陽気", romaji: "youki"}, {en: "Lonely", jp: "孤独", romaji: "kodoku"}, {en: "Pure/innocent", jp: "純粋", romaji: "junsui"}, {en: "Timid/cowardly", jp: "臆病", romaji: "okubyou"}
+                ]},
+                24: { title: "自然と環境 (Nature & Environment)", words: [
+                    {en: "Natural resources", jp: "天然資源", romaji: "tennen shigen"}, {en: "Fossil fuels", jp: "化石燃料", romaji: "kaseki nenryou"}, {en: "Renewable energy", jp: "再生可能エネルギー", romaji: "saisei kanou enerugii"}, {en: "Solar power", jp: "太陽光発電", romaji: "taiyoukou hatsuden"}, {en: "Wind power", jp: "風力発電", romaji: "fuuryoku hatsuden"}, {en: "Global warming", jp: "地球温暖化", romaji: "chikyuu ondanka"}, {en: "Climate change", jp: "気候変動", romaji: "kikou hendou"}, {en: "Deforestation", jp: "森林破壊", romaji: "shinrin hakai"}, {en: "Air pollution", jp: "大気汚染", romaji: "taiki osen"}, {en: "Water pollution", jp: "水質汚濁", romaji: "suishitsu odaku"}, {en: "Ecosystem", jp: "生態系", romaji: "seitaikei"}, {en: "Biodiversity", jp: "生物多様性", romaji: "seibutsu tayousei"}, {en: "Conservation", jp: "保護", romaji: "hogo"}, {en: "to protect (nature)", jp: "保護する", romaji: "hogo suru"}, {en: "to pollute", jp: "汚染する", romaji: "osen suru"}, {en: "to recycle", jp: "再利用する", romaji: "sai riyou suru"}, {en: "to reduce", jp: "減らす", romaji: "herasu"}, {en: "to save/conserve", jp: "節約する", romaji: "setsuyaku suru"}, {en: "Sustainable", jp: "持続可能", romaji: "jizoku kanou"}, {en: "Environmental", jp: "環境の", romaji: "kankyou no"}
+                ]},
+                25: { title: "ITとコミュニケーション (IT & Communication)", words: [
+                    {en: "Internet", jp: "インターネット", romaji: "intaanetto"}, {en: "Website", jp: "ウェブサイト", romaji: "webusaito"}, {en: "Email", jp: "電子メール", romaji: "denshi meeru"}, {en: "Social media", jp: "ソーシャルメディア", romaji: "soosharu media"}, {en: "Blog", jp: "ブログ", romaji: "burogu"}, {en: "Password", jp: "パスワード", romaji: "pasuwaado"}, {en: "Username", jp: "ユーザー名", romaji: "yuuzaamei"}, {en: "to log in", jp: "ログインする", romaji: "roguin suru"}, {en: "to log out", jp: "ログアウトする", romaji: "roguauto suru"}, {en: "to download", jp: "ダウンロードする", romaji: "daunroodo suru"}, {en: "to upload", jp: "アップロードする", romaji: "appuroodo suru"}, {en: "to search", jp: "検索する", romaji: "kensaku suru"}, {en: "to click", jp: "クリックする", romaji: "kurikku suru"}, {en: "to post/contribute", jp: "投稿する", romaji: "toukou suru"}, {en: "to share", jp: "共有する", romaji: "kyouyuu suru"}, {en: "File", jp: "ファイル", romaji: "fairu"}, {en: "Folder", jp: "フォルダー", romaji: "forudaa"}, {en: "Software", jp: "ソフトウェア", romaji: "sofutowea"}, {en: "Hardware", jp: "ハードウェア", romaji: "haadowea"}, {en: "Smartphone", jp: "スマートフォン", romaji: "sumaatofon"}
+                ]},
+                26: { title: "旅行と文化体験 (Travel & Culture)", words: [
+                    {en: "Passport", jp: "パスポート", romaji: "pasupooto"}, {en: "Visa", jp: "ビザ", romaji: "biza"}, {en: "Customs (border)", jp: "税関", romaji: "zeikan"}, {en: "Flight", jp: "フライト", romaji: "furaito"}, {en: "Hotel", jp: "ホテル", romaji: "hoteru"}, {en: "Tourist information", jp: "観光案内所", romaji: "kankou annaijo"}, {en: "World heritage", jp: "世界遺産", romaji: "sekai isan"}, {en: "National treasure", jp: "国宝", romaji: "kokuhou"}, {en: "Castle", jp: "城", romaji: "shiro"}, {en: "Hot spring", jp: "温泉", romaji: "onsen"}, {en: "Festival", jp: "祭り", romaji: "matsuri"}, {en: "Fireworks", jp: "花火", romaji: "hanabi"}, {en: "Traditional arts", jp: "伝統芸能", romaji: "dentou geinou"}, {en: "Tea ceremony", jp: "茶道", romaji: "sadou"}, {en: "Flower arrangement", jp: "華道", romaji: "kadou"}, {en: "to stay (at a hotel)", jp: "泊まる", romaji: "tomaru"}, {en: "to visit (a place)", jp: "訪れる", romaji: "otozureru"}, {en: "to experience", jp: "体験する", romaji: "taiken suru"}, {en: "to enjoy", jp: "楽しむ", romaji: "tanoshimu"}, {en: "to recommend", jp: "おすすめする", romaji: "osusume suru"}
+                ]},
+                27: { title: "高度な形容詞 (Advanced Adjectives)", words: [
+                    {en: "Appropriate", jp: "適切", romaji: "tekisetsu"}, {en: "Inappropriate", jp: "不適切", romaji: "futekisetsu"}, {en: "Ideal", jp: "理想的", romaji: "risouteki"}, {en: "Realistic", jp: "現実的", romaji: "genjitsuteki"}, {en: "Abstract", jp: "抽象的", romaji: "chuushouteki"}, {en: "Concrete/specific", jp: "具体的", romaji: "gutaiteki"}, {en: "Positive", jp: "積極的", romaji: "sekkyokuteki"}, {en: "Negative", jp: "消極的", romaji: "shoukyokuteki"}, {en: "Objective", jp: "客観的", romaji: "kyakkanteki"}, {en: "Subjective", jp: "主観的", romaji: "shukanteki"}, {en: "Logical", jp: "論理的", romaji: "ronriteki"}, {en: "Emotional", jp: "感情的", romaji: "kanjouteki"}, {en: "Creative", jp: "創造的", romaji: "souzouteki"}, {en: "Conservative", jp: "保守的", romaji: "hoshuteki"}, {en: "Progressive", jp: "革新的", romaji: "kakushinteki"}, {en: "Efficient", jp: "効率的", romaji: "kouritsuteki"}, {en: "Inefficient", jp: "非効率的", romaji: "hikouritsuteki"}, {en: "Essential", jp: "不可欠", romaji: "fukaketsu"}, {en: "Transparent", jp: "透明", romaji: "toumei"}, {en: "Ambiguous", jp: "曖昧", romaji: "aimai"}
+                ]},
+                28: { title: "最終復習と会話表現 (Final Review & Phrases)", words: [
+                    {en: "to summarize", jp: "要約する", romaji: "youyaku suru"}, {en: "to emphasize", jp: "強調する", romaji: "kyouchou suru"}, {en: "to evaluate", jp: "評価する", romaji: "hyouka suru"}, {en: "to analyze", jp: "分析する", romaji: "bunseki suru"}, {en: "to classify", jp: "分類する", romaji: "bunrui suru"}, {en: "to define", jp: "定義する", romaji: "teigi suru"}, {en: "to prove", jp: "証明する", romaji: "shoumei suru"}, {en: "to assume", jp: "仮定する", romaji: "katei suru"}, {en: "to conclude", jp: "結論付ける", romaji: "ketsuron-zukeru"}, {en: "In short / To sum up", jp: "要するに", romaji: "yousuruni"}, {en: "In other words", jp: "言い換えれば", romaji: "iikaereba"}, {en: "From my point of view", jp: "私の考えでは", romaji: "watashi no kangae dewa"}, {en: "Generally speaking", jp: "一般的に言って", romaji: "ippanteki ni itte"}, {en: "To be honest", jp: "正直に言うと", romaji: "shoujiki ni iu to"}, {en: "It seems that...", jp: "～らしい", romaji: "~rashii"}, {en: "It looks like...", jp: "～みたい", romaji: "~mitai"}, {en: "Supposed to be...", jp: "～はず", romaji: "~hazu"}, {en: "There is a possibility", jp: "可能性がある", romaji: "kanousei ga aru"}, {en: "There is no choice but to", jp: "～しかない", romaji: "~shika nai"}, {en: "Not necessarily", jp: "必ずしも～ない", romaji: "kanarazushimo ~nai"}
+                ]}
+            }
         };
 
         let currentState = {
             week: 1,
             day: 1,
-            learned: {}
+            learned: {},
+            studyMode: 'en-jp' // 'en-jp' or 'jp-en'
         };
 
         const weekNav = document.getElementById('week-nav');
@@ -821,6 +190,7 @@
         const flashcardContainer = document.getElementById('flashcard-container');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
+        const studyModeToggle = document.getElementById('study-mode-toggle');
 
         function initializeApp() {
             renderWeekNav();
@@ -828,6 +198,27 @@
             renderDayNav();
             renderFlashcards();
             updateProgress();
+            setupStudyModeToggle();
+        }
+
+        function setupStudyModeToggle() {
+            updateStudyModeButtonText();
+            studyModeToggle.onclick = () => {
+                currentState.studyMode = currentState.studyMode === 'en-jp' ? 'jp-en' : 'en-jp';
+                currentState.learned = {}; // Reset progress when mode changes
+                updateStudyModeButtonText();
+                renderFlashcards();
+                updateProgress();
+                saveState();
+            };
+        }
+
+        function updateStudyModeButtonText() {
+            if (currentState.studyMode === 'en-jp') {
+                studyModeToggle.textContent = 'Switch to: Japanese → English';
+            } else {
+                studyModeToggle.textContent = 'Switch to: English → Japanese';
+            }
         }
 
         function saveState() {
@@ -838,9 +229,8 @@
             const savedState = localStorage.getItem('jpnVocabState');
             if (savedState) {
                 const parsedState = JSON.parse(savedState);
-                // Ensure loaded state is valid for current vocab data
                 if (vocabulary[parsedState.week] && vocabulary[parsedState.week][parsedState.day]) {
-                     currentState = parsedState;
+                     currentState = { ...currentState, ...parsedState };
                 }
             }
         }
@@ -853,8 +243,9 @@
                 button.className = `nav-btn px-4 py-2 rounded-lg font-semibold text-sm md:text-base ${parseInt(weekNum) === currentState.week ? 'active bg-[#268BD2] text-white' : 'bg-[#EEE8D5] text-[#586E75] hover:bg-[#93A1A1] hover:text-white'}`;
                 button.onclick = () => {
                     currentState.week = parseInt(weekNum);
-                    currentState.day = Object.keys(vocabulary[weekNum])[0]; // Reset to first day of the week
-                    currentState.learned = {}; // Reset progress for the new day
+                    const firstDayOfWeek = Object.keys(vocabulary[weekNum])[0];
+                    currentState.day = parseInt(firstDayOfWeek);
+                    currentState.learned = {};
                     renderDayNav();
                     renderFlashcards();
                     updateActiveButtons();
@@ -874,7 +265,7 @@
                 button.className = `nav-btn px-3 py-1.5 rounded-md text-xs md:text-sm font-medium ${parseInt(dayNum) === currentState.day ? 'active bg-[#859900] text-white' : 'bg-[#FDF6E3] text-[#586E75] hover:bg-[#93A1A1] hover:text-white'}`;
                 button.onclick = () => {
                     currentState.day = parseInt(dayNum);
-                    currentState.learned = {}; // Reset progress for the new day
+                    currentState.learned = {};
                     renderFlashcards();
                     updateActiveButtons();
                     updateProgress();
@@ -887,19 +278,31 @@
         function renderFlashcards() {
             flashcardContainer.innerHTML = '';
             const words = vocabulary[currentState.week][currentState.day].words;
+            const isJpFirst = currentState.studyMode === 'jp-en';
 
             words.forEach((word, index) => {
                 const cardWrapper = document.createElement('div');
-                cardWrapper.className = 'w-full perspective';
+                cardWrapper.className = 'w-full perspective-container';
+
+                const frontContent = isJpFirst 
+                    ? `<p class="text-xl font-bold text-center">${word.jp}</p><p class="text-sm mt-1">${word.romaji}</p>` 
+                    : `<p class="text-lg font-semibold text-center px-2">${word.en}</p>`;
+                
+                const backContent = isJpFirst 
+                    ? `<p class="text-lg font-semibold text-center px-2">${word.en}</p>` 
+                    : `<p class="text-xl font-bold text-center">${word.jp}</p><p class="text-sm text-yellow-100 mt-1">${word.romaji}</p>`;
+
+                const frontBg = isJpFirst ? 'bg-[#B58900] text-white' : 'bg-white text-[#586E75]';
+                const backBg = isJpFirst ? 'bg-white text-[#586E75]' : 'bg-[#B58900] text-white';
+
                 cardWrapper.innerHTML = `
                     <div class="card h-28 md:h-32 shadow-lg rounded-xl cursor-pointer ${currentState.learned[index] ? 'is-flipped' : ''}">
                         <div class="card-inner">
-                            <div class="card-face bg-white flex-col">
-                                <p class="text-lg font-semibold text-center px-2">${word.en}</p>
+                            <div class="card-face ${frontBg}">
+                                ${frontContent}
                             </div>
-                            <div class="card-back bg-[#B58900] text-white flex-col p-2">
-                                <p class="text-xl font-bold text-center">${word.jp}</p>
-                                <p class="text-sm text-yellow-100 mt-1">${word.romaji}</p>
+                            <div class="card-back ${backBg}">
+                                ${backContent}
                             </div>
                         </div>
                     </div>
@@ -929,28 +332,24 @@
             progressText.textContent = `Day ${currentState.day}: ${dayData.title} — ${learnedCount} / ${totalWords} words reviewed`;
         }
 
-
         function updateActiveButtons() {
-            // Update week buttons
             Array.from(weekNav.children).forEach((button, index) => {
                 if (index + 1 === currentState.week) {
                     button.classList.add('active', 'bg-[#268BD2]', 'text-white');
-                    button.classList.remove('bg-[#EEE8D5]', 'text-[#586E75]', 'hover:bg-[#93A1A1]', 'hover:text-white');
+                    button.classList.remove('bg-[#EEE8D5]', 'text-[#586E75]');
                 } else {
                     button.classList.remove('active', 'bg-[#268BD2]', 'text-white');
-                    button.classList.add('bg-[#EEE8D5]', 'text-[#586E75]', 'hover:bg-[#93A1A1]', 'hover:text-white');
+                    button.classList.add('bg-[#EEE8D5]', 'text-[#586E75]');
                 }
             });
 
-            // Update day buttons
-            Array.from(dayNav.children).forEach((button, index) => {
-                const dayKey = Object.keys(vocabulary[currentState.week])[index];
-                 if (parseInt(dayKey) === currentState.day) {
+            Array.from(dayNav.children).forEach((button) => {
+                 if (parseInt(button.textContent.split(' ')[1]) === currentState.day) {
                     button.classList.add('active', 'bg-[#859900]', 'text-white');
-                    button.classList.remove('bg-[#FDF6E3]', 'text-[#586E75]', 'hover:bg-[#93A1A1]', 'hover:text-white');
+                    button.classList.remove('bg-[#FDF6E3]', 'text-[#586E75]');
                 } else {
                     button.classList.remove('active', 'bg-[#859900]', 'text-white');
-                    button.classList.add('bg-[#FDF6E3]', 'text-[#586E75]', 'hover:bg-[#93A1A1]', 'hover:text-white');
+                    button.classList.add('bg-[#FDF6E3]', 'text-[#586E75]');
                 }
             });
         }
