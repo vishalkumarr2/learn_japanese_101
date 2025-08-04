@@ -1,0 +1,112 @@
+body {
+  font-family: "Segoe UI", Arial, "Yu Gothic", Meiryo, sans-serif;
+  background: #fdf6e3;
+  margin: 0;
+  color: #586e75;
+}
+
+.header {
+  background: #eee8d5;
+  padding: 2rem 1rem 1.5rem 1rem;
+  border-bottom: 1px solid #d3cfcf;
+}
+
+.header-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.site-title {
+  font-size: 2.5rem;
+  color: #657B83;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.03em;
+}
+
+.site-subtitle {
+  font-size: 1.2rem;
+  color: #839496;
+  margin: 0 0 1.5rem 0;
+}
+.en-subtitle {
+  display: inline-block;
+  color: #93a1a1;
+  font-size: 0.96em;
+}
+
+.primary-btn {
+  display: inline-block;
+  background: #268BD2;
+  color: #fff;
+  font-size: 1rem;
+  padding: 0.55em 1.4em;
+  border-radius: 25px;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.primary-btn:hover, .primary-btn:focus {
+  background: #859900;
+  color: #fff;
+}
+
+.main-nav {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 1em 0;
+  margin-bottom: 2.5rem;
+}
+.nav-link {
+  color: #657b83;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.18s;
+  padding: 0.3em 0.8em;
+  border-radius: 8px;
+}
+.nav-link.active,
+.nav-link:hover,
+.nav-link:focus {
+  background: #e3f6fd;
+  color: #268BD2;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+@media (min-width: 700px) {
+  .content-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 3px 14px rgba(150, 150, 150, 0.12);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.card h2 {
+  margin-top: 0;
+  color: #268BD2;
+  font-size: 1.4rem;
+}
+.card p {
+  margin: 0.7em 0 0 0;
+  color: #586e75;
+  font-size: 1.06rem;
+}
