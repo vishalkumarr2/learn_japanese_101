@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本語の数字 (Japanese Numbers)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        .table-cell {
+            padding: 0.75rem;
+            text-align: center;
+            border-bottom: 1px solid #EEE8D5;
+        }
+        .table-header {
+            background-color: #EEE8D5;
+            font-weight: 600;
+            color: #586E75;
+        }
+        .note {
+            background-color: #FFF3CD;
+            border-left: 4px solid #FFC107;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-[#FDF6E3] text-[#586E75] min-h-screen">
+    <div id="app" class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-5xl font-bold text-[#657B83]">日本語の数字</h1>
+            <p class="text-lg md:text-xl text-[#839496] mt-2">A Guide to Japanese Numbers</p>
+            <a href="index.html" class="text-[#268BD2] hover:text-[#859900] underline mt-4 inline-block">← Back to Flashcards</a>
+        </header>
+
+        <main class="bg-white/80 p-6 rounded-xl shadow-lg">
+            <!-- Section 1: Basic Numbers 1-10 -->
+            <section>
+                <h2 class="text-2xl font-bold text-[#657B83] mb-4 border-b-2 border-[#EEE8D5] pb-2">Basic Numbers (1-10)</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-full text-left">
+                        <thead>
+                            <tr>
+                                <th class="table-cell table-header">Number</th>
+                                <th class="table-cell table-header">Kanji</th>
+                                <th class="table-cell table-header">Hiragana</th>
+                                <th class="table-cell table-header">Romaji</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="table-cell">1</td><td class="table-cell">一</td><td class="table-cell">いち</td><td class="table-cell">ichi</td></tr>
+                            <tr><td class="table-cell">2</td><td class="table-cell">二</td><td class="table-cell">に</td><td class="table-cell">ni</td></tr>
+                            <tr><td class="table-cell">3</td><td class="table-cell">三</td><td class="table-cell">さん</td><td class="table-cell">san</td></tr>
+                            <tr><td class="table-cell">4</td><td class="table-cell">四</td><td class="table-cell">し / よん</td><td class="table-cell">shi / yon</td></tr>
+                            <tr><td class="table-cell">5</td><td class="table-cell">五</td><td class="table-cell">ご</td><td class="table-cell">go</td></tr>
+                            <tr><td class="table-cell">6</td><td class="table-cell">六</td><td class="table-cell">ろく</td><td class="table-cell">roku</td></tr>
+                            <tr><td class="table-cell">7</td><td class="table-cell">七</td><td class="table-cell">しち / なな</td><td class="table-cell">shichi / nana</td></tr>
+                            <tr><td class="table-cell">8</td><td class="table-cell">八</td><td class="table-cell">はち</td><td class="table-cell">hachi</td></tr>
+                            <tr><td class="table-cell">9</td><td class="table-cell">九</td><td class="table-cell">きゅう / く</td><td class="table-cell">kyuu / ku</td></tr>
+                            <tr><td class="table-cell">10</td><td class="table-cell">十</td><td class="table-cell">じゅう</td><td class="table-cell">juu</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="note">
+                    <p><strong>Note on 4, 7, 9:</strong> The numbers 4, 7, and 9 have two common readings. <strong>Yon, nana,</strong> and <strong>kyuu</strong> are generally preferred. <strong>Shi</strong> can sound like 死 (death), so it's often avoided.</p>
+                </div>
+            </section>
+
+            <!-- Section 2: Larger Numbers -->
+            <section class="mt-8">
+                <h2 class="text-2xl font-bold text-[#657B83] mb-4 border-b-2 border-[#EEE8D5] pb-2">Larger Numbers</h2>
+                <p class="mb-4">Japanese numbers are constructed logically. For 11-19, you say "ten" plus the number. For 20, 30, etc., you say the number plus "ten".</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-full text-left">
+                        <thead>
+                            <tr>
+                                <th class="table-cell table-header">Number</th>
+                                <th class="table-cell table-header">Kanji</th>
+                                <th class="table-cell table-header">Reading</th>
+                                <th class="table-cell table-header">Logic</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="table-cell">11</td><td class="table-cell">十一</td><td class="table-cell">じゅういち (juuichi)</td><td class="table-cell">10 + 1</td></tr>
+                            <tr><td class="table-cell">14</td><td class="table-cell">十四</td><td class="table-cell">じゅうよん (juuyon)</td><td class="table-cell">10 + 4</td></tr>
+                            <tr><td class="table-cell">20</td><td class="table-cell">二十</td><td class="table-cell">にじゅう (nijuu)</td><td class="table-cell">2 x 10</td></tr>
+                            <tr><td class="table-cell">35</td><td class="table-cell">三十五</td><td class="table-cell">さんじゅうご (sanjuugo)</td><td class="table-cell">(3 x 10) + 5</td></tr>
+                            <tr><td class="table-cell">100</td><td class="table-cell">百</td><td class="table-cell">ひゃく (hyaku)</td><td class="table-cell">Hundred</td></tr>
+                            <tr><td class="table-cell">1,000</td><td class="table-cell">千</td><td class="table-cell">せん (sen)</td><td class="table-cell">Thousand</td></tr>
+                            <tr><td class="table-cell">10,000</td><td class="table-cell">万</td><td class="table-cell">まん (man)</td><td class="table-cell">Ten Thousand</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Section 3: Reading Changes -->
+            <section class="mt-8">
+                <h2 class="text-2xl font-bold text-[#657B83] mb-4 border-b-2 border-[#EEE8D5] pb-2">Important Reading Changes</h2>
+                <p class="mb-4">When certain numbers combine, their pronunciation changes to make them easier to say. This is most common with hundreds and thousands.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-full text-left">
+                         <thead>
+                            <tr>
+                                <th class="table-cell table-header">Number</th>
+                                <th class="table-cell table-header">Kanji</th>
+                                <th class="table-cell table-header">Reading (Romaji)</th>
+                                <th class="table-cell table-header">Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="table-cell">300</td><td class="table-cell">三百</td><td class="table-cell">sanbyaku</td><td class="table-cell">hyaku → byaku</td></tr>
+                            <tr><td class="table-cell">600</td><td class="table-cell">六百</td><td class="table-cell">roppyaku</td><td class="table-cell">roku + hyaku → roppyaku</td></tr>
+                            <tr><td class="table-cell">800</td><td class="table-cell">八百</td><td class="table-cell">happyaku</td><td class="table-cell">hachi + hyaku → happyaku</td></tr>
+                            <tr><td class="table-cell">3,000</td><td class="table-cell">三千</td><td class="table-cell">sanzen</td><td class="table-cell">sen → zen</td></tr>
+                             <tr><td class="table-cell">8,000</td><td class="table-cell">八千</td><td class="table-cell">hassen</td><td class="table-cell">hachi + sen → hassen</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- Section 4: Examples -->
+            <section class="mt-8">
+                <h2 class="text-2xl font-bold text-[#657B83] mb-4 border-b-2 border-[#EEE8D5] pb-2">Putting It All Together</h2>
+                <div class="overflow-x-auto">
+                     <table class="w-full min-w-full text-left">
+                         <thead>
+                            <tr>
+                                <th class="table-cell table-header">Number</th>
+                                <th class="table-cell table-header">Kanji</th>
+                                <th class="table-cell table-header">Reading (Romaji)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="table-cell">479</td><td class="table-cell">四百七十九</td><td class="table-cell">yonhyaku nana-juu kyuu</td></tr>
+                            <tr><td class="table-cell">1,984</td><td class="table-cell">千九百八十四</td><td class="table-cell">sen kyuu-hyaku hachi-juu yon</td></tr>
+                            <tr><td class="table-cell">2025</td><td class="table-cell">二千二十五</td><td class="table-cell">ni-sen ni-juu go</td></tr>
+                            <tr><td class="table-cell">12,500</td><td class="table-cell">一万二千五百</td><td class="table-cell">ichi-man ni-sen go-hyaku</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                 <div class="note">
+                    <p><strong>Katakana for Numbers:</strong> While uncommon for general counting, Katakana is sometimes used in specific contexts like writing prices on menus (e.g., ビール ¥五〇〇) for stylistic reasons or to prevent fraud on legal documents.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
