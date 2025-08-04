@@ -24,6 +24,30 @@
             margin-top: 1.5rem;
             border-radius: 0.25rem;
         }
+        .quiz-question {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border: 1px solid #EEE8D5;
+            border-radius: 0.5rem;
+        }
+        .quiz-options label {
+            display: block;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .quiz-options label:hover {
+            background-color: #fdf6e3;
+        }
+        .correct {
+            background-color: #d4edda !important;
+            border-left: 4px solid #28a745;
+        }
+        .incorrect {
+            background-color: #f8d7da !important;
+            border-left: 4px solid #dc3545;
+        }
     </style>
 </head>
 <body class="bg-[#FDF6E3] text-[#586E75] min-h-screen">
@@ -143,7 +167,92 @@
                     <p><strong>Katakana for Numbers:</strong> While uncommon for general counting, Katakana is sometimes used in specific contexts like writing prices on menus (e.g., ビール ¥五〇〇) for stylistic reasons or to prevent fraud on legal documents.</p>
                 </div>
             </section>
+
+            <!-- Section 5: Quiz -->
+            <section class="mt-8">
+                <h2 class="text-2xl font-bold text-[#657B83] mb-4 border-b-2 border-[#EEE8D5] pb-2">Quick Quiz: Test Your Understanding</h2>
+                <div id="quiz-container"></div>
+                <button id="check-answers-btn" class="mt-4 px-6 py-2 bg-[#268BD2] text-white font-semibold rounded-lg shadow-md hover:bg-[#005a9e] transition-colors">Check Answers</button>
+                <div id="quiz-results" class="mt-4 text-lg font-semibold"></div>
+            </section>
         </main>
     </div>
+
+    <script>
+        const quizData = [
+            { question: "What is 7?", options: ["しち", "なな", "きゅう"], answer: 1 },
+            { question: "What is 40?", options: ["よん", "よじゅう", "よんじゅう"], answer: 2 },
+            { question: "What is 95?", options: ["きゅうじゅうご", "くじゅうご", "きゅうご"], answer: 0 },
+            { question: "What is 300?", options: ["さんひゃく", "さんびゃく", "さんぴゃく"], answer: 1 },
+            { question: "What is 800?", options: ["はちひゃく", "はっぴゃく", "はちびゃく"], answer: 1 },
+            { question: "What is 600?", options: ["ろくひゃく", "ろっぴゃく", "ろぴゃく"], answer: 1 },
+            { question: "What is 3,000?", options: ["さんせん", "さんぜん", "さんち"], answer: 1 },
+            { "question": "What is 8,000?", "options": ["はちせん", "はっせん", "はっぜん"], "answer": 1 },
+            { question: "How do you read 千二百三十四?", options: ["sen nihyaku sanjuushi", "sen nihyaku sanjuuyon", "chi nihyaku sanjuuyon"], answer: 1 },
+            { question: "How do you read 六万五千?", options: ["rokuman gosen", "roppuman gosen", "rokuman gozen"], answer: 0 }
+        ];
+
+        function generateQuiz() {
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = '';
+            quizData.forEach((item, index) => {
+                const questionEl = document.createElement('div');
+                questionEl.className = 'quiz-question';
+                
+                let optionsHtml = '';
+                item.options.forEach((option, optionIndex) => {
+                    optionsHtml += `
+                        <label>
+                            <input type="radio" name="question${index}" value="${optionIndex}">
+                            <span class="ml-2">${option}</span>
+                        </label>
+                    `;
+                });
+
+                questionEl.innerHTML = `
+                    <p class="font-semibold mb-2">${index + 1}. ${item.question}</p>
+                    <div class="quiz-options space-y-1">${optionsHtml}</div>
+                `;
+                quizContainer.appendChild(questionEl);
+            });
+        }
+
+        function checkAnswers() {
+            let score = 0;
+            quizData.forEach((item, index) => {
+                const questionEl = document.querySelectorAll('.quiz-question')[index];
+                const selectedOption = questionEl.querySelector(`input[name="question${index}"]:checked`);
+                const labels = questionEl.querySelectorAll('label');
+
+                labels.forEach(label => {
+                    label.classList.remove('correct', 'incorrect');
+                });
+
+                if (selectedOption) {
+                    const selectedAnswer = parseInt(selectedOption.value);
+                    const correctLabel = labels[item.answer];
+                    
+                    if (selectedAnswer === item.answer) {
+                        score++;
+                        selectedOption.parentElement.classList.add('correct');
+                    } else {
+                        selectedOption.parentElement.classList.add('incorrect');
+                        correctLabel.classList.add('correct');
+                    }
+                } else {
+                    // Mark the correct answer if nothing was selected
+                    labels[item.answer].classList.add('correct');
+                }
+            });
+
+            const resultsEl = document.getElementById('quiz-results');
+            resultsEl.textContent = `You scored ${score} out of ${quizData.length}!`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            generateQuiz();
+            document.getElementById('check-answers-btn').addEventListener('click', checkAnswers);
+        });
+    </script>
 </body>
 </html>
